@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Hover Actions",
+  "version": "0.1.0",
+  "description": "Adds Not interested and Don't recommend channel actions directly on YouTube video cards.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
+      "js": [
+        "src/content-utils.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    }
+  ]
+}

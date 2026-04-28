@@ -1,0 +1,98 @@
+.yt-hover-actions-card {
+  position: relative;
+}
+
+.yt-hover-actions-overlay {
+  align-items: flex-end;
+  backdrop-filter: blur(2px);
+  background: rgba(128, 128, 128, 0.12);
+  background: color-mix(in srgb, var(--yt-spec-base-background, #0f0f0f) 14%, transparent);
+  border-radius: 8px;
+  box-sizing: border-box;
+  display: flex;
+  gap: 8px;
+  inset: auto 8px 8px;
+  justify-content: center;
+  min-height: 50px;
+  opacity: 0;
+  padding: 10px 10px 12px;
+  pointer-events: none;
+  position: absolute;
+  transform: translateY(3px);
+  transition: opacity 120ms ease, transform 120ms ease;
+  z-index: 30;
+}
+
+.yt-hover-actions-preparing ytd-popup-container {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.yt-hover-actions-card:hover .yt-hover-actions-overlay,
+.yt-hover-actions-overlay:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.yt-hover-actions-native-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.yt-hover-actions-status {
+  background: var(--yt-spec-raised-background, rgba(255, 255, 255, 0.94));
+  border-radius: 6px;
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  min-height: 34px;
+  padding: 8px 10px;
+}
+
+.yt-hover-actions-button {
+  background: var(--yt-spec-raised-background, rgba(255, 255, 255, 0.94));
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  cursor: pointer;
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  min-height: 34px;
+  padding: 8px 10px;
+  white-space: normal;
+}
+
+.yt-hover-actions-button[data-yt-hover-ready="false"] {
+  opacity: 0.72;
+}
+
+.yt-hover-actions-button[data-yt-hover-working="true"] {
+  cursor: wait;
+  opacity: 0.82;
+}
+
+.yt-hover-actions-button:hover,
+.yt-hover-actions-button:focus-visible {
+  background: var(--yt-spec-button-chip-background-hover, rgba(255, 255, 255, 0.98));
+  outline: 2px solid rgba(62, 166, 255, 0.9);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .yt-hover-actions-overlay {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .yt-hover-actions-native-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
