@@ -16,10 +16,12 @@ Chrome/Chromium extension that shows `Not interested` and `Don't recommend chann
 2. Hover a video card that has a three-dot menu.
 3. Confirm the gray blurred overlay appears.
 4. Click `Not interested`.
-5. Confirm YouTube behaves the same as selecting `Not interested` from the native three-dot menu.
-6. Refresh YouTube, hover another card, and click `Don't recommend channel`.
-7. Confirm YouTube behaves the same as selecting `Don't recommend channel` from the native three-dot menu.
-8. Repeat on Search results or another page where video cards have a three-dot menu.
+5. Confirm YouTube behaves the same as selecting `Not interested` from the native three-dot menu, and the extension buttons switch to green `Undo` controls.
+6. Click YouTube's native `Undo` button and confirm both extension buttons return to their normal icons.
+7. Click `Don't recommend channel` on another card.
+8. Confirm the green extension `Undo` button triggers YouTube's native undo and resets both extension buttons.
+9. Use keyboard focus to tab to the extension buttons and confirm the overlay is visible and each button has a clear focus outline.
+10. Repeat on Search results or another page where video cards have a three-dot menu.
 
 ## Notes
 

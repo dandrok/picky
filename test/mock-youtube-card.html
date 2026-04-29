@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>YouTube Hover Actions Mock</title>
+  <link rel="stylesheet" href="../src/content.css">
+  <style>
+    body {
+      background: #f9f9f9;
+      font-family: Arial, sans-serif;
+      padding: 48px;
+    }
+
+    ytd-rich-item-renderer {
+      background: #fff;
+      border: 1px solid #ddd;
+      display: block;
+      min-height: 220px;
+      padding: 12px;
+      width: 360px;
+    }
+
+    .thumb {
+      background: #ddd;
+      height: 150px;
+      margin-bottom: 10px;
+    }
+
+    #menu {
+      background: #fff;
+      border: 1px solid #aaa;
+      left: 430px;
+      padding: 8px;
+      position: absolute;
+      top: 80px;
+    }
+
+    #menu[hidden] {
+      display: none;
+    }
+
+    #menu button,
+    ytd-dismissed-data-renderer button {
+      display: inline-block;
+      margin: 4px;
+      min-height: 32px;
+      min-width: 72px;
+    }
+
+    ytd-dismissed-data-renderer {
+      background: #eef6ee;
+      display: block;
+      margin-top: 12px;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <ytd-rich-item-renderer id="card">
+    <div class="thumb"></div>
+    <strong>Mock YouTube Video</strong>
+    <button id="overflow" aria-label="Action menu" type="button">...</button>
+  </ytd-rich-item-renderer>
+  <div id="menu" hidden></div>
+
+  <script>
+    const card = document.querySelector('#card');
+    const menu = document.querySelector('#menu');
+    const overflow = document.querySelector('#overflow');
+    window.__mock = { actionClicks: 0, undoClicks: 0 };
+
+    function restoreCard() {
+      window.__mock.undoClicks += 1;
+      const marker = card.querySelector('ytd-dismissed-data-renderer');
+      if (marker) marker.remove();
+    }
+
+    function dismissCard(label) {
+      window.__mock.actionClicks += 1;
+      menu.hidden = true;
+      if (card.querySelector('ytd-dismissed-data-renderer')) return;
+
+      const marker = document.createElement('ytd-dismissed-data-renderer');
+      marker.textContent = `${label} applied `;
+
+      const undo = document.createElement('button');
+      undo.id = 'native-undo';
+      undo.type = 'button';
+      undo.textContent = 'Undo';
+      undo.addEventListener('click', restoreCard);
+
+      marker.appendChild(undo);
+      card.appendChild(marker);
+    }
+
+    overflow.addEventListener('click', () => {
+      menu.hidden = false;
+      menu.textContent = '';
+
+      const notInterested = document.createElement('button');
+      notInterested.type = 'button';
+      notInterested.setAttribute('role', 'menuitem');
+      notInterested.textContent = 'Not interested';
+      notInterested.addEventListener('click', () => dismissCard('Not interested'));
+
+      const dontRecommend = document.createElement('button');
+      dontRecommend.type = 'button';
+      dontRecommend.setAttribute('role', 'menuitem');
+      dontRecommend.textContent = "Don't recommend channel";
+      dontRecommend.addEventListener('click', () => dismissCard("Don't recommend channel"));
+
+      menu.append(notInterested, dontRecommend);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') menu.hidden = true;
+    });
+  </script>
+  <script src="../src/content-utils.js"></script>
+  <script src="../src/button-ui.js"></script>
+  <script src="../src/youtube-actions.js"></script>
+  <script src="../src/content.js"></script>
+  <script>
+    function wait(ms) {
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      });
+    }
+
+    async function waitFor(predicate, timeout = 3000) {
+      const start = Date.now();
+      while (Date.now() - start < timeout) {
+        if (predicate()) return;
+        await wait(25);
+      }
+      throw new Error('Timed out waiting for mock assertion');
+    }
+
+    function buttonStates() {
+      return Array.from(document.querySelectorAll('.yt-hover-actions-button')).map((button) => ({
+        action: button.dataset.action,
+        state: button.dataset.state,
+        label: button.getAttribute('aria-label'),
+      }));
+    }
+
+    function allButtonsAre(state) {
+      return Array.from(document.querySelectorAll('.yt-hover-actions-button')).every((button) => (
+        button.dataset.state === state
+      ));
+    }
+
+    async function runMockVerification() {
+      const results = {};
+
+      window.__step = 'wait for extension buttons';
+      await waitFor(() => document.querySelectorAll('.yt-hover-actions-button').length === 2);
+      results.initial = buttonStates();
+
+      window.__step = 'click extension not interested';
+      document.querySelector('.yt-hover-actions-button[data-action="not-interested"]').click();
+      window.__step = 'wait for first dismissal marker';
+      await waitFor(() => card.querySelector('ytd-dismissed-data-renderer'));
+      window.__step = 'wait for first success state';
+      await waitFor(() => allButtonsAre('success'));
+      results.afterAction = buttonStates();
+
+      window.__step = 'click native undo';
+      document.querySelector('#native-undo').click();
+      window.__step = 'wait for native undo marker removal';
+      await waitFor(() => !card.querySelector('ytd-dismissed-data-renderer'));
+      window.__step = 'wait for native undo idle state';
+      await waitFor(() => allButtonsAre('idle'));
+      results.afterNativeUndo = buttonStates();
+
+      window.__step = 'click extension dont recommend';
+      document.querySelector('.yt-hover-actions-button[data-action="dont-recommend-channel"]').click();
+      window.__step = 'wait for second dismissal marker';
+      await waitFor(() => card.querySelector('ytd-dismissed-data-renderer'));
+      window.__step = 'wait for second success state';
+      await waitFor(() => allButtonsAre('success'));
+
+      window.__step = 'click extension success undo';
+      document.querySelector('.yt-hover-actions-button[data-state="success"]').click();
+      window.__step = 'wait for extension undo marker removal';
+      await waitFor(() => !card.querySelector('ytd-dismissed-data-renderer'));
+      window.__step = 'wait for extension undo idle state';
+      await waitFor(() => allButtonsAre('idle'));
+      results.afterExtensionUndo = buttonStates();
+
+      window.__step = 'focus overlay button';
+      document.querySelector('.yt-hover-actions-button[data-action="not-interested"]').focus();
+      await waitFor(() => Number.parseFloat(getComputedStyle(document.querySelector('.yt-hover-actions-overlay')).opacity) > 0.9);
+      results.focusOpacity = getComputedStyle(document.querySelector('.yt-hover-actions-overlay')).opacity;
+      results.focusPointerEvents = getComputedStyle(document.querySelector('.yt-hover-actions-overlay')).pointerEvents;
+      results.mockCounts = window.__mock;
+
+      const pass = (
+        results.initial.every((button) => button.state === 'idle') &&
+        results.afterAction.every((button) => button.state === 'success' && button.label === 'Undo') &&
+        results.afterNativeUndo.every((button) => button.state === 'idle' && button.label !== 'Undo') &&
+        results.afterExtensionUndo.every((button) => button.state === 'idle' && button.label !== 'Undo') &&
+        Number.parseFloat(results.focusOpacity) > 0.9 &&
+        results.focusPointerEvents === 'auto' &&
+        results.mockCounts.actionClicks === 2 &&
+        results.mockCounts.undoClicks === 2
+      );
+
+      document.body.dataset.testPass = pass ? 'true' : 'false';
+      document.body.dataset.testResults = JSON.stringify(results);
+
+      const output = document.createElement('pre');
+      output.id = 'mock-results';
+      output.textContent = JSON.stringify({ pass, results }, null, 2);
+      document.body.appendChild(output);
+    }
+
+    runMockVerification().catch((error) => {
+      document.body.dataset.testPass = 'false';
+      document.body.dataset.testError = error.message;
+      document.body.dataset.testResults = JSON.stringify({
+        step: window.__step,
+        buttons: buttonStates(),
+        activeElement: document.activeElement && document.activeElement.outerHTML,
+        focusOpacity: getComputedStyle(document.querySelector('.yt-hover-actions-overlay')).opacity,
+        focusPointerEvents: getComputedStyle(document.querySelector('.yt-hover-actions-overlay')).pointerEvents,
+        cardDismissed: Boolean(card.querySelector('ytd-dismissed-data-renderer')),
+        menuHidden: menu.hidden,
+        menuText: menu.textContent,
+        mockCounts: window.__mock,
+      });
+    });
+  </script>
+</body>
+</html>

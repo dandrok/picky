@@ -25,6 +25,22 @@
     'button:not([hidden])',
   ].join(',');
 
+  const DISMISSED_CARD_SELECTOR = [
+    'ytd-dismissed-data-renderer',
+    '.yt-dismissed-data-renderer',
+    'ytd-dismissal-follow-up-renderer',
+    '[is-dismissed]',
+  ].join(',');
+
+  const UNDO_BUTTON_SELECTOR = [
+    'button:not([hidden])',
+    '[role="button"]:not([hidden])',
+    'tp-yt-paper-button:not([hidden])',
+    'ytd-button-renderer:not([hidden])',
+    'yt-button-view-model:not([hidden])',
+    'a:not([hidden])',
+  ].join(',');
+
   function normalizeMenuText(value) {
     return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
   }
@@ -53,69 +69,14 @@
     return item.querySelector(MENU_ACTION_TARGET_SELECTOR) || item;
   }
 
+  function getButtonClickTarget(item) {
+    if (!item || typeof item.querySelector !== 'function') return item || null;
+    return item.querySelector('button:not([hidden]), [role="button"]:not([hidden]), a:not([hidden])') || item;
+  }
+
   function findMenuItemByAction(items, action) {
     const item = Array.from(items || []).find((candidate) => textMatchesAction(candidate.textContent, action));
     return getActionClickTarget(item);
-  }
-
-  function getMenuItemEndpoint(item) {
-    if (!item) return null;
-    if (item.endpoint) return item.endpoint;
-    if (item.data) {
-      return item.data.serviceEndpoint || item.data.navigationEndpoint || item.data.command || null;
-    }
-    if (item.__data) {
-      return item.__data.serviceEndpoint || item.__data.navigationEndpoint || item.__data.command || null;
-    }
-    return null;
-  }
-
-  function findCommandInData(data, action) {
-    if (!data) return null;
-    const label = normalizeMenuText(getActionLabel(action));
-    
-    // YouTube data structures are deeply nested and vary by renderer
-    const search = (obj, depth = 0) => {
-      if (!obj || depth > 10) return null;
-
-      // Handle ViewModels (newer YouTube UI)
-      if (obj.viewModel?.menuViewModel?.menuViewModel?.items) {
-        for (const item of obj.viewModel.menuViewModel.menuViewModel.items) {
-          const renderer = item.menuItemViewModel;
-          if (renderer) {
-            const text = normalizeMenuText(renderer.title || '');
-            if (text.includes(label)) {
-              return renderer.serviceEndpoint || renderer.navigationEndpoint || renderer.command || renderer.onTap;
-            }
-          }
-        }
-      }
-      
-      // If we found a menu renderer, look through its items
-      if (obj.menuRenderer && obj.menuRenderer.items) {
-        for (const item of obj.menuRenderer.items) {
-          const renderer = item.menuServiceItemRenderer || item.menuNavigationItemRenderer;
-          if (renderer) {
-            const text = normalizeMenuText(renderer.text?.runs?.[0]?.text || renderer.text?.simpleText || '');
-            if (text.includes(label)) {
-              return renderer.serviceEndpoint || renderer.navigationEndpoint || renderer.command;
-            }
-          }
-        }
-      }
-
-      // Recursively search in likely properties
-      const keys = ['menu', 'content', 'videoRenderer', 'reelItemRenderer', 'gridVideoRenderer', 'compactVideoRenderer', 'onTap', 'command'];
-      for (const key of keys) {
-        if (obj[key] && typeof obj[key] === 'object') {
-          const result = search(obj[key], depth + 1);
-          if (result) return result;
-        }
-      }
-      return null;
-    };
-
-    return search(data);
   }
 
   function isOverflowButton(element) {
@@ -144,6 +105,44 @@
     return rect.width > 0 && rect.height > 0;
   }
 
+  function isCardDismissed(card) {
+    return Boolean(card && typeof card.querySelector === 'function' && card.querySelector(DISMISSED_CARD_SELECTOR));
+  }
+
+  function textMatchesUndo(element) {
+    if (!element) return false;
+
+    const values = [
+      element.textContent,
+      element.getAttribute && element.getAttribute('aria-label'),
+      element.getAttribute && element.getAttribute('title'),
+    ];
+
+    return values.some((value) => normalizeMenuText(value) === 'undo');
+  }
+
+  function isExtensionActionButton(element) {
+    return Boolean(
+      element &&
+      element.classList &&
+      typeof element.classList.contains === 'function' &&
+      element.classList.contains('yt-hover-actions-button')
+    );
+  }
+
+  function findUndoButton(container) {
+    if (!container || typeof container.querySelectorAll !== 'function') return null;
+
+    const candidates = Array.from(container.querySelectorAll(UNDO_BUTTON_SELECTOR));
+    const undoCandidate = candidates.find((candidate) => (
+      !isExtensionActionButton(candidate) &&
+      textMatchesUndo(candidate) &&
+      isVisibleElement(candidate)
+    ));
+
+    return getButtonClickTarget(undoCandidate);
+  }
+
   function wait(ms) {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
@@ -163,56 +162,55 @@
       buttons: 1,
     };
 
-    const events = [
-      new PointerEvent('pointerdown', { ...eventOptions, pointerType: 'mouse' }),
-      new MouseEvent('mousedown', eventOptions),
-      new PointerEvent('pointerup', { ...eventOptions, buttons: 0, pointerType: 'mouse' }),
-      new MouseEvent('mouseup', { ...eventOptions, buttons: 0 }),
-      new MouseEvent('click', { ...eventOptions, buttons: 0 }),
+    const createPointerEvent = (type, options) => {
+      if (typeof PointerEvent === 'function') {
+        return new PointerEvent(type, { ...options, pointerType: 'mouse' });
+      }
+      if (typeof MouseEvent === 'function') {
+        return new MouseEvent(type, options);
+      }
+      return { type };
+    };
+
+    const createMouseEvent = (type, options) => {
+      if (typeof MouseEvent === 'function') {
+        return new MouseEvent(type, options);
+      }
+      return { type };
+    };
+
+    const pointerEvents = [
+      createPointerEvent('pointerdown', eventOptions),
+      createMouseEvent('mousedown', eventOptions),
+      createPointerEvent('pointerup', { ...eventOptions, buttons: 0 }),
+      createMouseEvent('mouseup', { ...eventOptions, buttons: 0 }),
     ];
 
-    events.forEach((ev) => element.dispatchEvent(ev));
+    pointerEvents.forEach((ev) => element.dispatchEvent(ev));
 
-    // Also call the native .click() if it exists as a fallback
     if (typeof element.click === 'function') {
       try {
         element.click();
       } catch (e) {
         // Ignore potential errors from native click
       }
+    } else {
+      element.dispatchEvent(createMouseEvent('click', { ...eventOptions, buttons: 0 }));
     }
 
     return true;
-  }
-
-  function setActionButtonCommand(button, command) {
-    if (!button) return;
-
-    button.__ytHoverCommand = command || null;
-
-    if (button.dataset) {
-      button.dataset.ytHoverReady = command ? 'true' : 'false';
-    }
-
-    if (typeof button.setAttribute === 'function') {
-      button.setAttribute('aria-disabled', command ? 'false' : 'true');
-    }
-
-    if ('disabled' in button) {
-      button.disabled = false;
-    }
   }
 
   return {
     ACTIONS,
     normalizeMenuText,
     getActionLabel,
-    getMenuItemEndpoint,
     findMenuItemByAction,
     isOverflowButton,
     isVisibleElement,
+    isCardDismissed,
+    findUndoButton,
     dispatchNativeClick,
-    setActionButtonCommand,
     wait,
   };
 });

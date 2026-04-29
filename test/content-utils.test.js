@@ -5,12 +5,12 @@ const {
   ACTIONS,
   normalizeMenuText,
   getActionLabel,
-  getMenuItemEndpoint,
   findMenuItemByAction,
   isOverflowButton,
   isVisibleElement,
   dispatchNativeClick,
-  setActionButtonCommand,
+  isCardDismissed,
+  findUndoButton,
 } = require('../src/content-utils');
 
 test('normalizeMenuText collapses whitespace and lowercases labels', () => {
@@ -75,20 +75,6 @@ test('findMenuItemByAction returns null when the action is missing', () => {
   assert.equal(findMenuItemByAction(items, ACTIONS.NOT_INTERESTED), null);
 });
 
-test('getMenuItemEndpoint returns service endpoint data', () => {
-  const endpoint = { feedbackEndpoint: { feedbackToken: 'abc' } };
-  const item = { data: { serviceEndpoint: endpoint } };
-
-  assert.equal(getMenuItemEndpoint(item), endpoint);
-});
-
-test('getMenuItemEndpoint falls back to navigation endpoint data', () => {
-  const endpoint = { signInEndpoint: {} };
-  const item = { data: { navigationEndpoint: endpoint } };
-
-  assert.equal(getMenuItemEndpoint(item), endpoint);
-});
-
 test('isOverflowButton accepts common YouTube overflow aria labels', () => {
   const button = {
     getAttribute(name) {
@@ -144,7 +130,7 @@ test('isVisibleElement accepts laid out elements even when opacity is zero', () 
   assert.equal(isVisibleElement(visibleElement), true);
 });
 
-test('dispatchNativeClick prefers the native click method', () => {
+test('dispatchNativeClick dispatches native-like events even when browser event constructors are unavailable', () => {
   const eventTypes = [];
   let clickCallCount = 0;
   const element = {
@@ -157,12 +143,12 @@ test('dispatchNativeClick prefers the native click method', () => {
     },
   };
 
-  assert.equal(dispatchNativeClick(element, (type) => ({ type })), true);
-  assert.deepEqual(eventTypes, []);
+  assert.equal(dispatchNativeClick(element), true);
+  assert.deepEqual(eventTypes, ['pointerdown', 'mousedown', 'pointerup', 'mouseup']);
   assert.equal(clickCallCount, 1);
 });
 
-test('dispatchNativeClick dispatches a click event when click method is unavailable', () => {
+test('dispatchNativeClick dispatches a full mouse sequence when click method is unavailable', () => {
   const eventTypes = [];
   const element = {
     dispatchEvent(event) {
@@ -171,43 +157,131 @@ test('dispatchNativeClick dispatches a click event when click method is unavaila
     },
   };
 
-  assert.equal(dispatchNativeClick(element, (type) => ({ type })), true);
-  assert.deepEqual(eventTypes, ['click']);
+  assert.equal(dispatchNativeClick(element), true);
+  assert.deepEqual(eventTypes, ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']);
 });
 
-test('setActionButtonCommand keeps unavailable action buttons clickable', () => {
-  const attributes = {};
-  const button = {
-    dataset: {},
-    disabled: true,
-    setAttribute(name, value) {
-      attributes[name] = value;
+test('isCardDismissed detects YouTube dismissal markers inside a card', () => {
+  const dismissedMarker = {};
+  const card = {
+    querySelector(selector) {
+      return selector.includes('ytd-dismissed-data-renderer') ? dismissedMarker : null;
     },
   };
 
-  setActionButtonCommand(button, null);
-
-  assert.equal(button.disabled, false);
-  assert.equal(button.dataset.ytHoverReady, 'false');
-  assert.equal(attributes['aria-disabled'], 'true');
-  assert.equal(button.__ytHoverCommand, null);
+  assert.equal(isCardDismissed(card), true);
 });
 
-test('setActionButtonCommand stores ready native commands without disabling the button', () => {
-  const command = { endpoint: {}, resolveCommand() {} };
-  const attributes = {};
-  const button = {
-    dataset: {},
-    disabled: true,
-    setAttribute(name, value) {
-      attributes[name] = value;
+test('isCardDismissed returns false when a card has no dismissal markers', () => {
+  const card = {
+    querySelector() {
+      return null;
     },
   };
 
-  setActionButtonCommand(button, command);
+  assert.equal(isCardDismissed(card), false);
+});
 
-  assert.equal(button.disabled, false);
-  assert.equal(button.dataset.ytHoverReady, 'true');
-  assert.equal(attributes['aria-disabled'], 'false');
-  assert.equal(button.__ytHoverCommand, command);
+test('findUndoButton finds a visible native undo button by text', () => {
+  const share = {
+    textContent: 'Share',
+    offsetParent: {},
+    getAttribute() {
+      return null;
+    },
+    getBoundingClientRect() {
+      return { width: 48, height: 32 };
+    },
+  };
+  const undo = {
+    textContent: 'Undo',
+    offsetParent: {},
+    getAttribute() {
+      return null;
+    },
+    getBoundingClientRect() {
+      return { width: 48, height: 32 };
+    },
+  };
+  const container = {
+    querySelectorAll(selector) {
+      return selector.includes('button') ? [share, undo] : [];
+    },
+  };
+
+  assert.equal(findUndoButton(container), undo);
+});
+
+test('findUndoButton returns a nested clickable target for renderer wrappers', () => {
+  const nestedButton = {
+    textContent: 'Undo',
+    offsetParent: {},
+    getAttribute() {
+      return null;
+    },
+    getBoundingClientRect() {
+      return { width: 48, height: 32 };
+    },
+  };
+  const wrapper = {
+    tagName: 'YTD-BUTTON-RENDERER',
+    textContent: 'Undo',
+    offsetParent: {},
+    getAttribute() {
+      return null;
+    },
+    getBoundingClientRect() {
+      return { width: 48, height: 32 };
+    },
+    querySelector(selector) {
+      return selector.includes('button') ? nestedButton : null;
+    },
+  };
+  const container = {
+    querySelectorAll(selector) {
+      return selector.includes('button') ? [wrapper] : [];
+    },
+  };
+
+  assert.equal(findUndoButton(container), nestedButton);
+});
+
+test('findUndoButton ignores extension undo buttons and returns YouTube native undo', () => {
+  const extensionButton = {
+    textContent: '',
+    offsetParent: {},
+    classList: {
+      contains(className) {
+        return className === 'yt-hover-actions-button';
+      },
+    },
+    getAttribute(name) {
+      return name === 'aria-label' ? 'Undo' : null;
+    },
+    getBoundingClientRect() {
+      return { width: 36, height: 36 };
+    },
+  };
+  const nativeUndo = {
+    textContent: 'Undo',
+    offsetParent: {},
+    classList: {
+      contains() {
+        return false;
+      },
+    },
+    getAttribute() {
+      return null;
+    },
+    getBoundingClientRect() {
+      return { width: 48, height: 32 };
+    },
+  };
+  const container = {
+    querySelectorAll(selector) {
+      return selector.includes('button') ? [extensionButton, nativeUndo] : [];
+    },
+  };
+
+  assert.equal(findUndoButton(container), nativeUndo);
 });

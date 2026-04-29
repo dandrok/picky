@@ -20,14 +20,21 @@
   z-index: 2147483647;
 }
 
-.yt-hover-actions-card:hover .yt-hover-actions-overlay {
+.yt-hover-actions-card:hover .yt-hover-actions-overlay,
+.yt-hover-actions-card:focus-within .yt-hover-actions-overlay,
+.yt-hover-actions-overlay:focus-within {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
 }
 
+.yt-hover-actions-card:focus-within .yt-hover-actions-overlay,
+.yt-hover-actions-overlay:focus-within {
+  transition-duration: 0ms;
+}
+
 .yt-hover-actions-card.yt-hover-actions-dismissed .yt-hover-actions-overlay {
-  display: none !important;
+  display: flex;
 }
 
 .yt-hover-actions-button {
@@ -54,14 +61,31 @@
 
 .yt-hover-actions-button:hover,
 .yt-hover-actions-button:focus-visible {
-  background: rgba(255, 0, 0, 0.85);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+  outline: 2px solid rgba(62, 166, 255, 0.95);
+  outline-offset: 2px;
+  transform: scale(1.1);
+}
+
+.yt-hover-actions-button[data-action="not-interested"]:hover {
+  background: rgba(255, 145, 0, 0.95); /* Orange-ish */
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.yt-hover-actions-button[data-action="dont-recommend-channel"]:hover {
+  background: rgba(255, 68, 68, 0.9); /* Soft Red */
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.yt-hover-actions-overlay[data-locked="true"] .yt-hover-actions-button:not([data-working="true"]) {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.5);
 }
 
 .yt-hover-actions-button-success {
   background: rgba(43, 166, 64, 0.9) !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
+  cursor: pointer !important;
 }
 
 .yt-hover-actions-button-error {
@@ -70,12 +94,18 @@
 
 @media (prefers-color-scheme: light) {
   .yt-hover-actions-button {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     border-color: rgba(0, 0, 0, 0.1);
     color: #0f0f0f;
   }
-  .yt-hover-actions-button:hover {
-    background: rgba(255, 0, 0, 0.9);
+  
+  .yt-hover-actions-button[data-action="not-interested"]:hover {
+    background: #ff9100;
+    color: #fff;
+  }
+
+  .yt-hover-actions-button[data-action="dont-recommend-channel"]:hover {
+    background: #ff4444;
     color: #fff;
   }
 }
