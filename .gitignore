@@ -144,3 +144,5 @@ vite.config.ts.timestamp-*
 .playwright-mcp/
 .codex
 docs/*
+icons/*
+PRIVACY.md
