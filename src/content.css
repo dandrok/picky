@@ -5,7 +5,6 @@
 .yt-hover-actions-overlay {
   align-items: flex-end;
   backdrop-filter: blur(2px);
-  background: rgba(128, 128, 128, 0.12);
   background: color-mix(in srgb, var(--yt-spec-base-background, #0f0f0f) 14%, transparent);
   border-radius: 8px;
   box-sizing: border-box;
@@ -20,12 +19,7 @@
   position: absolute;
   transform: translateY(3px);
   transition: opacity 120ms ease, transform 120ms ease;
-  z-index: 30;
-}
-
-.yt-hover-actions-preparing ytd-popup-container {
-  opacity: 0 !important;
-  pointer-events: none !important;
+  z-index: 2147483647;
 }
 
 .yt-hover-actions-card:hover .yt-hover-actions-overlay,
@@ -35,22 +29,14 @@
   transform: translateY(0);
 }
 
+.yt-hover-actions-card.yt-hover-actions-dismissed .yt-hover-actions-overlay {
+  display: none !important;
+}
+
 .yt-hover-actions-native-actions {
   display: flex;
   gap: 8px;
   justify-content: center;
-}
-
-.yt-hover-actions-status {
-  background: var(--yt-spec-raised-background, rgba(255, 255, 255, 0.94));
-  border-radius: 6px;
-  color: var(--yt-spec-text-primary, #0f0f0f);
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-  min-height: 34px;
-  padding: 8px 10px;
 }
 
 .yt-hover-actions-button {
@@ -67,15 +53,6 @@
   min-height: 34px;
   padding: 8px 10px;
   white-space: normal;
-}
-
-.yt-hover-actions-button[data-yt-hover-ready="false"] {
-  opacity: 0.72;
-}
-
-.yt-hover-actions-button[data-yt-hover-working="true"] {
-  cursor: wait;
-  opacity: 0.82;
 }
 
 .yt-hover-actions-button:hover,

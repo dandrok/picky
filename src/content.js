@@ -47,6 +47,11 @@
       return;
     }
     
+    // Prevent nested enhancements - if a parent is already enhanced, skip this child
+    if (card.parentElement?.closest('.yt-hover-actions-card')) {
+      return;
+    }
+    
     // Some YouTube cards need specific positioning
     const style = getComputedStyle(card);
     if (style.position === 'static') {
@@ -64,7 +69,6 @@
     
     if (!overflow) {
       console.warn('[YTHover] No overflow button found on card', card);
-      // Try to find ANY button that might be a menu button if the standard check fails
       const fallbackBtn = card.querySelector('button[aria-label*="menu"], yt-icon-button button');
       if (fallbackBtn) {
         fallbackBtn.click();
@@ -75,10 +79,8 @@
       overflow.click();
     }
     
-    // 2. Wait for Menu and Find Item
     for (let i = 0; i < 40; i++) {
       await new Promise(r => setTimeout(r, 50));
-      // Look for any menu item that might contain our text
       const items = Array.from(document.querySelectorAll('ytd-menu-service-item-renderer, yt-list-item-view-model, tp-yt-paper-item, [role="menuitem"], .ytm-menu-item, .ytListItemViewModelHost'));
       const target = items.find(el => {
         const text = (el.textContent || '').toLowerCase();
@@ -86,17 +88,13 @@
       });
       
       if (target) {
-        console.log('[YTHover] Found target menu item:', target.textContent.trim());
-        // 3. Click it!
         utils.dispatchNativeClick(target);
         return true;
       }
     }
-    console.error('[YTHover] Could not find menu item for:', actionLabel);
     return false;
   }
 
-  // Handle clicks on our custom buttons
   document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.yt-hover-actions-button');
     if (!btn) return;
@@ -111,7 +109,6 @@
     btn.dataset.working = 'true';
 
     const originalText = btn.textContent;
-    console.log('[YTHover] Action triggered:', originalText);
     btn.style.opacity = '0.5';
     btn.textContent = '...';
     
@@ -126,20 +123,27 @@
     }, 1000);
   }, true);
 
-  // Initial scan and observer
   const runScan = () => {
     const cards = document.querySelectorAll(CARD_SELECTOR);
     for (let i = 0; i < cards.length; i++) {
       enhance(cards[i]);
+    }
+
+    const enhanced = document.querySelectorAll('.yt-hover-actions-card');
+    for (let i = 0; i < enhanced.length; i++) {
+      const card = enhanced[i];
+      const dismissed = card.querySelector('ytd-dismissed-data-renderer, .yt-dismissed-data-renderer, ytd-dismissal-follow-up-renderer, [is-dismissed]');
+      if (dismissed) {
+        card.classList.add('yt-hover-actions-dismissed');
+      } else {
+        card.classList.remove('yt-hover-actions-dismissed');
+      }
     }
   };
 
   const observer = new MutationObserver(() => runScan());
   observer.observe(document.documentElement, { childList: true, subtree: true });
   
-  // Extra safety: interval scan
   setInterval(runScan, 2000);
   runScan();
-
-  console.log('[YTHover] Extension ready and observing.');
 })();

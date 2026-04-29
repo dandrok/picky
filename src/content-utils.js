@@ -159,7 +159,7 @@
       bubbles: true,
       cancelable: true,
       composed: true,
-      view: window,
+      view: typeof window !== 'undefined' ? window : null,
       buttons: 1,
     };
 
