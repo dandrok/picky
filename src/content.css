@@ -3,27 +3,24 @@
 }
 
 .yt-hover-actions-overlay {
-  align-items: flex-end;
-  backdrop-filter: blur(2px);
-  background: color-mix(in srgb, var(--yt-spec-base-background, #0f0f0f) 14%, transparent);
-  border-radius: 8px;
+  align-items: center;
+  background: transparent;
+  bottom: 8px;
   box-sizing: border-box;
   display: flex;
-  gap: 8px;
-  inset: auto 8px 8px;
-  justify-content: center;
-  min-height: 50px;
+  gap: 6px;
+  justify-content: flex-start;
+  left: 8px;
   opacity: 0;
-  padding: 10px 10px 12px;
+  padding: 4px;
   pointer-events: none;
   position: absolute;
-  transform: translateY(3px);
+  transform: translateY(2px);
   transition: opacity 120ms ease, transform 120ms ease;
   z-index: 2147483647;
 }
 
-.yt-hover-actions-card:hover .yt-hover-actions-overlay,
-.yt-hover-actions-overlay:focus-within {
+.yt-hover-actions-card:hover .yt-hover-actions-overlay {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -33,43 +30,52 @@
   display: none !important;
 }
 
-.yt-hover-actions-native-actions {
+.yt-hover-actions-button {
+  align-items: center;
+  backdrop-filter: blur(8px);
+  background: rgba(15, 15, 15, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  cursor: pointer;
   display: flex;
-  gap: 8px;
+  height: 36px;
   justify-content: center;
+  padding: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 36px;
 }
 
-.yt-hover-actions-button {
-  background: var(--yt-spec-raised-background, rgba(255, 255, 255, 0.94));
-  border: 0;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
-  color: var(--yt-spec-text-primary, #0f0f0f);
-  cursor: pointer;
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-  min-height: 34px;
-  padding: 8px 10px;
-  white-space: normal;
+.yt-hover-actions-button svg {
+  display: block;
+  opacity: 0.9;
 }
 
 .yt-hover-actions-button:hover,
 .yt-hover-actions-button:focus-visible {
-  background: var(--yt-spec-button-chip-background-hover, rgba(255, 255, 255, 0.98));
-  outline: 2px solid rgba(62, 166, 255, 0.9);
-  outline-offset: 2px;
+  background: rgba(255, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 }
 
-@media (max-width: 520px) {
-  .yt-hover-actions-overlay {
-    align-items: stretch;
-    flex-direction: column;
-  }
+.yt-hover-actions-button-success {
+  background: rgba(43, 166, 64, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
 
-  .yt-hover-actions-native-actions {
-    align-items: stretch;
-    flex-direction: column;
+.yt-hover-actions-button-error {
+  background: rgba(255, 78, 69, 0.9) !important;
+}
+
+@media (prefers-color-scheme: light) {
+  .yt-hover-actions-button {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #0f0f0f;
+  }
+  .yt-hover-actions-button:hover {
+    background: rgba(255, 0, 0, 0.9);
+    color: #fff;
   }
 }
