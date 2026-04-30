@@ -2,6 +2,12 @@
 
 Chrome/Chromium extension that shows `Not interested` and `Don't recommend channel` directly on YouTube video cards when you hover them.
 
+## Install From Chrome Web Store
+
+Install the published extension from the Chrome Web Store:
+
+https://chromewebstore.google.com/detail/youtube-hover-actions/jlljlpnhadllcnbajpmgcpjobmfekjhh
+
 ## Install Locally
 
 1. Open `chrome://extensions`.
