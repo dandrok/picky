@@ -16,16 +16,14 @@
         "https://m.youtube.com/*"
       ],
       "js": [
-        "src/content-utils.js",
-        "src/button-ui.js",
-        "src/youtube-actions.js",
-        "src/content.js"
+        "content.global.js"
       ],
       "css": [
-        "src/content.css"
+        "content.css"
       ],
       "run_at": "document_idle",
       "world": "MAIN"
     }
   ]
 }
+

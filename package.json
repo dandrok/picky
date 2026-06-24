@@ -4,6 +4,24 @@
   "private": true,
   "description": "Chrome extension that exposes YouTube card menu actions on hover.",
   "scripts": {
-    "test": "node --test"
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && tsup && cp manifest.json dist/ && cp -r icons dist/",
+    "test": "npm run typecheck && node --import tsx --test test/**/*.test.ts",
+    "lint": "npm run typecheck && eslint src/**/*.ts test/**/*.ts",
+    "format": "npm run typecheck && prettier --write src/**/*.ts test/**/*.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.5.0",
+    "@types/node": "^20.14.9",
+    "eslint": "^9.5.0",
+    "globals": "^15.6.0",
+    "prettier": "^3.3.2",
+    "tsup": "^8.1.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.2",
+    "typescript-eslint": "^8.0.0-alpha.34"
   }
 }
+
+
+
