@@ -10,7 +10,7 @@
   display: flex;
   gap: 6px;
   justify-content: flex-start;
-  left: 8px;
+  right: 8px;
   opacity: 0;
   padding: 4px;
   pointer-events: none;
