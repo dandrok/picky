@@ -8,7 +8,8 @@
     "build": "npm run typecheck && tsup && node -e \"const fs = require('fs'); fs.copyFileSync('manifest.json', 'dist/manifest.json'); fs.cpSync('icons', 'dist/icons', { recursive: true });\"",
     "test": "npm run typecheck && node --import tsx --test test/**/*.test.ts",
     "lint": "npm run typecheck && eslint src/**/*.ts test/**/*.ts",
-    "format": "npm run typecheck && prettier --write src/**/*.ts test/**/*.ts"
+    "format": "npm run typecheck && prettier --write src/**/*.ts test/**/*.ts",
+    "format:check": "npm run typecheck && prettier --check src/**/*.ts test/**/*.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",
