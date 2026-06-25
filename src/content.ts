@@ -70,7 +70,7 @@ import * as youtubeActions from './youtube-actions';
       overlay.dataset.status = 'dismissed';
       htmlCard.classList.add('yt-hover-actions-dismissed');
       overlay.classList.add('yt-hover-actions-hidden');
-      
+
       const buttons = buttonUi.getOverlayButtons(overlay);
       buttonUi.clearOverlayPending(overlay);
       buttons.forEach((button) => buttonUi.setButtonState(button, buttonUi.BUTTON_STATES.SUCCESS));
@@ -171,7 +171,7 @@ import * as youtubeActions from './youtube-actions';
 
     // Find the closest native button-like element that matches YouTube's Undo button criteria
     const nativeUndoButton = event.target.closest(
-      'button, [role="button"], tp-yt-paper-button, ytd-button-renderer, yt-button-view-model'
+      'button, [role="button"], tp-yt-paper-button, ytd-button-renderer, yt-button-view-model',
     );
 
     let isNativeUndo = false;
@@ -183,12 +183,14 @@ import * as youtubeActions from './youtube-actions';
     } else {
       // Fallback/Diagnostic: If we didn't match the selector, check if we clicked inside a dismissed card
       // and the clicked element's text itself matches "Undo".
-      const dismissedCard = event.target.closest('.yt-hover-actions-card.yt-hover-actions-dismissed') as HTMLElement;
+      const dismissedCard = event.target.closest(
+        '.yt-hover-actions-card.yt-hover-actions-dismissed',
+      ) as HTMLElement;
       if (dismissedCard && utils.textMatchesUndo(event.target)) {
         console.warn(
           '[YouTube Hover Actions] Possible DOM structure change detected. ' +
             'Native Undo clicked but not matched by button selector.',
-          event.target
+          event.target,
         );
         isNativeUndo = true;
         targetCard = dismissedCard;
