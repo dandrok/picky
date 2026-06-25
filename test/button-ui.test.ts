@@ -1,16 +1,15 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-const { ACTIONS } = require('../src/content-utils');
-const {
-  BUTTON_STATES,
-  getButtonIconPath,
-  getButtonLabel,
-} = require('../src/button-ui');
+import { ACTIONS } from '../src/content-utils';
+import { BUTTON_STATES, getButtonIconPath, getButtonLabel } from '../src/button-ui';
 
 test('getButtonLabel describes normal action buttons', () => {
   assert.equal(getButtonLabel(ACTIONS.NOT_INTERESTED, BUTTON_STATES.IDLE), 'Not interested');
-  assert.equal(getButtonLabel(ACTIONS.DONT_RECOMMEND_CHANNEL, BUTTON_STATES.IDLE), "Don't recommend channel");
+  assert.equal(
+    getButtonLabel(ACTIONS.DONT_RECOMMEND_CHANNEL, BUTTON_STATES.IDLE),
+    "Don't recommend channel",
+  );
 });
 
 test('getButtonLabel describes success buttons as undo controls', () => {
