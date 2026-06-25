@@ -11,14 +11,21 @@ module.exports = [
       sourceType: "module",
       globals: {
         ...globals.browser,
-        ...globals.webextensions,
-        ...globals.node
+        ...globals.webextensions
       }
     },
     rules: {
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "warn"
+    }
+  },
+  {
+    files: ["eslint.config.js", "tsup.config.ts", "test/**/*.ts"],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
     }
   }
 ];

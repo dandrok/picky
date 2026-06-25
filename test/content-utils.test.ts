@@ -159,6 +159,21 @@ test('isVisibleElement rejects elements with visibility: hidden computed style',
   }
 });
 
+test('isVisibleElement rejects zero-size elements even with offsetParent', () => {
+  const zeroSizeElement = {
+    hidden: false,
+    offsetParent: {},
+    getAttribute() {
+      return null;
+    },
+    getBoundingClientRect() {
+      return { width: 0, height: 100 };
+    },
+  } as unknown as Element;
+
+  assert.equal(isVisibleElement(zeroSizeElement), false);
+});
+
 test('dispatchNativeClick dispatches native-like events even when browser event constructors are unavailable', () => {
   const eventTypes: string[] = [];
   const events: Event[] = [];

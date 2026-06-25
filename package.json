@@ -1,11 +1,11 @@
 {
   "name": "youtube-hover-actions",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Chrome extension that exposes YouTube card menu actions on hover.",
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && tsup && cp manifest.json dist/ && cp -r icons dist/",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "build": "npm run typecheck && tsup && node -e \"const fs = require('fs'); fs.copyFileSync('manifest.json', 'dist/manifest.json'); fs.cpSync('icons', 'dist/icons', { recursive: true });\"",
     "test": "npm run typecheck && node --import tsx --test test/**/*.test.ts",
     "lint": "npm run typecheck && eslint src/**/*.ts test/**/*.ts",
     "format": "npm run typecheck && prettier --write src/**/*.ts test/**/*.ts"
@@ -22,6 +22,3 @@
     "typescript-eslint": "^8.0.0-alpha.34"
   }
 }
-
-
-

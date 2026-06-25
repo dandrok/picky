@@ -139,7 +139,6 @@ export function isVisibleElement(element: Element | null): boolean {
         return false;
       }
     }
-    return true;
   }
 
   if (typeof element.getBoundingClientRect !== 'function') {

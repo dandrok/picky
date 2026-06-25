@@ -16,6 +16,7 @@ import * as youtubeActions from './youtube-actions';
   const UNDO_SETTLE_DELAY_MS = 600;
   const ERROR_RESET_DELAY_MS = 1500;
   const SCAN_INTERVAL_MS = 2000;
+  let isMenuActionInProgress = false;
 
   function debounce<T extends (...args: never[]) => void>(func: T, wait: number) {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -58,21 +59,50 @@ import * as youtubeActions from './youtube-actions';
     const overlay = htmlCard.querySelector('.yt-hover-actions-overlay') as HTMLElement;
     if (!overlay) return;
 
-    const buttons = buttonUi.getOverlayButtons(overlay);
+    if (overlay.dataset.pendingAction) {
+      return;
+    }
 
-    if (utils.isCardDismissed(htmlCard)) {
+    const status = overlay.dataset.status || 'idle';
+    const isDismissed = utils.isCardDismissed(htmlCard);
+
+    if (isDismissed) {
+      overlay.dataset.status = 'dismissed';
       htmlCard.classList.add('yt-hover-actions-dismissed');
+      overlay.classList.add('yt-hover-actions-hidden');
+      
+      const buttons = buttonUi.getOverlayButtons(overlay);
       buttonUi.clearOverlayPending(overlay);
       buttons.forEach((button) => buttonUi.setButtonState(button, buttonUi.BUTTON_STATES.SUCCESS));
       return;
     }
 
-    htmlCard.classList.remove('yt-hover-actions-dismissed');
+    if (status === 'dismissed') {
+      overlay.dataset.status = 'idle';
+      htmlCard.classList.remove('yt-hover-actions-dismissed');
+      overlay.classList.remove('yt-hover-actions-hidden');
 
-    if (overlay.dataset.pendingAction) {
+      const buttons = buttonUi.getOverlayButtons(overlay);
+      buttonUi.clearOverlayPending(overlay);
+      buttons.forEach((button) => buttonUi.setButtonState(button, buttonUi.BUTTON_STATES.IDLE));
       return;
     }
 
+    if (status === 'clicked') {
+      const clickTime = parseInt(overlay.dataset.clickTime || '0', 10);
+      if (Date.now() - clickTime < 5000) {
+        overlay.classList.add('yt-hover-actions-hidden');
+        return;
+      }
+    }
+
+    // Reset to idle
+    overlay.dataset.status = 'idle';
+    delete overlay.dataset.clickTime;
+    htmlCard.classList.remove('yt-hover-actions-dismissed');
+    overlay.classList.remove('yt-hover-actions-hidden');
+
+    const buttons = buttonUi.getOverlayButtons(overlay);
     buttonUi.clearOverlayPending(overlay);
     buttons.forEach((button) => buttonUi.setButtonState(button, buttonUi.BUTTON_STATES.IDLE));
   }
@@ -107,10 +137,26 @@ import * as youtubeActions from './youtube-actions';
 
   async function handleActionClick(button: HTMLElement, card: HTMLElement, overlay: HTMLElement) {
     const action = button.dataset.action as utils.ActionType;
+    overlay.classList.add('yt-hover-actions-hidden');
+    overlay.dataset.status = 'clicked';
+    overlay.dataset.clickTime = Date.now().toString();
     buttonUi.setOverlayPending(overlay, action);
     buttonUi.setButtonState(button, buttonUi.BUTTON_STATES.WORKING);
 
-    if (!(await youtubeActions.performAction(card, action, document))) {
+    isMenuActionInProgress = true;
+    let success = false;
+    try {
+      success = await youtubeActions.performAction(card, action, document);
+    } catch {
+      // ignore
+    } finally {
+      isMenuActionInProgress = false;
+    }
+
+    if (!success) {
+      overlay.classList.remove('yt-hover-actions-hidden');
+      delete overlay.dataset.status;
+      delete overlay.dataset.clickTime;
       showTransientError(button, card);
       return;
     }
@@ -122,6 +168,46 @@ import * as youtubeActions from './youtube-actions';
 
   async function handleButtonClick(event: Event) {
     if (!(event.target instanceof Element)) return;
+
+    // Find the closest native button-like element that matches YouTube's Undo button criteria
+    const nativeUndoButton = event.target.closest(
+      'button, [role="button"], tp-yt-paper-button, ytd-button-renderer, yt-button-view-model'
+    );
+
+    let isNativeUndo = false;
+    let targetCard: HTMLElement | null = null;
+
+    if (nativeUndoButton && utils.textMatchesUndo(nativeUndoButton)) {
+      isNativeUndo = true;
+      targetCard = nativeUndoButton.closest('.yt-hover-actions-card') as HTMLElement;
+    } else {
+      // Fallback/Diagnostic: If we didn't match the selector, check if we clicked inside a dismissed card
+      // and the clicked element's text itself matches "Undo".
+      const dismissedCard = event.target.closest('.yt-hover-actions-card.yt-hover-actions-dismissed') as HTMLElement;
+      if (dismissedCard && utils.textMatchesUndo(event.target)) {
+        console.warn(
+          '[YouTube Hover Actions] Possible DOM structure change detected. ' +
+            'Native Undo clicked but not matched by button selector.',
+          event.target
+        );
+        isNativeUndo = true;
+        targetCard = dismissedCard;
+      }
+    }
+
+    if (isNativeUndo && targetCard) {
+      const overlay = targetCard.querySelector('.yt-hover-actions-overlay') as HTMLElement;
+      if (overlay) {
+        overlay.dataset.status = 'idle';
+        delete overlay.dataset.clickTime;
+        targetCard.classList.remove('yt-hover-actions-dismissed');
+        overlay.classList.remove('yt-hover-actions-hidden');
+        const buttons = buttonUi.getOverlayButtons(overlay);
+        buttonUi.clearOverlayPending(overlay);
+        buttons.forEach((btn) => buttonUi.setButtonState(btn, buttonUi.BUTTON_STATES.IDLE));
+      }
+      return;
+    }
 
     const button = event.target.closest('.yt-hover-actions-button') as HTMLElement;
     if (!button) return;
@@ -139,6 +225,10 @@ import * as youtubeActions from './youtube-actions';
 
     if (buttonUi.isButtonSuccess(button)) {
       await handleUndoClick(button, card, overlay);
+      return;
+    }
+
+    if (isMenuActionInProgress) {
       return;
     }
 

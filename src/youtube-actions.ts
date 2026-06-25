@@ -1,5 +1,8 @@
 import * as utils from './content-utils';
 
+const MENU_POLL_ATTEMPTS = 40;
+const MENU_POLL_INTERVAL_MS = 50;
+
 function getCurrentDocument(doc?: Document | null): Document | null {
   return doc || (typeof document !== 'undefined' ? document : null);
 }
@@ -47,8 +50,8 @@ export async function performAction(
   const currentDocument = getCurrentDocument(doc);
   if (!currentDocument || !(await openCardMenu(card))) return false;
 
-  for (let i = 0; i < 40; i++) {
-    await utils.wait(50);
+  for (let i = 0; i < MENU_POLL_ATTEMPTS; i++) {
+    await utils.wait(MENU_POLL_INTERVAL_MS);
     const target = utils.findMenuItemByAction(getOpenMenuItems(currentDocument), action);
 
     if (target) {
