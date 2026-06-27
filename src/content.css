@@ -112,11 +112,11 @@
 
 /* Hide Shorts feature toggled via Picky settings */
 html[data-hide-shorts="true"] ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
-html[data-hide-shorts="true"] ytd-mini-guide-entry-renderer:has(a[title="Shorts"]),
-html[data-hide-shorts="true"] ytd-mini-guide-entry-renderer:has([title="Shorts"]),
+html[data-hide-shorts="true"] ytd-mini-guide-entry-renderer:has(path[d^="m13.467"]),
+html[data-hide-shorts="true"] ytd-mini-guide-entry-renderer:has(path[d^="M13.467"]),
 html[data-hide-shorts="true"] ytd-guide-entry-renderer:has(a[href^="/shorts"]),
-html[data-hide-shorts="true"] ytd-guide-entry-renderer:has(a[title="Shorts"]),
-html[data-hide-shorts="true"] ytd-guide-entry-renderer:has([title="Shorts"]),
+html[data-hide-shorts="true"] ytd-guide-entry-renderer:has(path[d^="m13.467"]),
+html[data-hide-shorts="true"] ytd-guide-entry-renderer:has(path[d^="M13.467"]),
 html[data-hide-shorts="true"] ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
 html[data-hide-shorts="true"] ytd-rich-shelf-renderer[is-shorts],
 html[data-hide-shorts="true"] ytd-reel-shelf-renderer,

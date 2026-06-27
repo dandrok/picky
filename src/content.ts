@@ -239,33 +239,135 @@ import * as youtubeActions from './youtube-actions';
 
   function checkShortsRedirect() {
     const isHideShorts = document.documentElement.getAttribute('data-hide-shorts') === 'true';
-    if (isHideShorts && window.location.pathname.startsWith('/shorts')) {
-      document.querySelectorAll('video').forEach((v) => {
-        try {
-          v.pause();
-        } catch {
-          // ignore error
-        }
-      });
+    if (!isHideShorts) return;
 
-      const parts = window.location.pathname.split('/');
-      const shortsIdx = parts.indexOf('shorts');
-      const videoId = shortsIdx !== -1 ? parts[shortsIdx + 1] : null;
+    const path = window.location.pathname;
+    const isShortsRoute = path === '/shorts' || path === '/shorts/' || path.startsWith('/shorts/');
+    if (!isShortsRoute) return;
 
-      if (videoId && videoId.length > 2) {
-        window.location.replace(`/watch?v=${videoId}`);
-      } else {
-        window.location.replace('/');
+    document.querySelectorAll('video').forEach((v) => {
+      try {
+        v.pause();
+      } catch {
+        // ignore error
       }
+    });
+
+    const parts = path.split('/').filter(Boolean);
+    const videoId = parts.length > 1 && parts[0] === 'shorts' ? parts[1] : null;
+
+    if (videoId) {
+      window.location.replace(`/watch?v=${videoId}`);
+    } else {
+      window.location.replace('/');
+    }
+  }
+
+  function isShortsChip(chip: Element): boolean {
+    const text = chip.textContent?.trim();
+    if (text === 'Shorts') {
+      return true;
+    }
+
+    const rawChip = chip as unknown as Record<string, unknown>;
+    const checkUrl = (url: unknown) => typeof url === 'string' && url.includes('shorts');
+    const checkBrowseId = (id: unknown) =>
+      typeof id === 'string' && (id === 'FEshorts' || id.toLowerCase().includes('shorts'));
+
+    const getNestedValue = (obj: unknown, path: string[]): unknown => {
+      let current = obj;
+      for (const key of path) {
+        if (current && typeof current === 'object') {
+          current = (current as Record<string, unknown>)[key];
+        } else {
+          return undefined;
+        }
+      }
+      return current;
+    };
+
+    const directEndpoint = rawChip.navigationEndpoint;
+    if (checkUrl(getNestedValue(directEndpoint, ['commandMetadata', 'webCommandMetadata', 'url'])))
+      return true;
+    if (checkBrowseId(getNestedValue(directEndpoint, ['browseEndpoint', 'browseId']))) return true;
+
+    const data = rawChip.elementData || rawChip.data || rawChip.chip;
+    if (data) {
+      const dataEndpoint = (data as Record<string, unknown>).navigationEndpoint;
+      if (checkUrl(getNestedValue(dataEndpoint, ['commandMetadata', 'webCommandMetadata', 'url'])))
+        return true;
+      if (checkBrowseId(getNestedValue(dataEndpoint, ['browseEndpoint', 'browseId']))) return true;
+
+      const cr =
+        (data as Record<string, unknown>).chipRenderer ||
+        (data as Record<string, unknown>).chipRender;
+      if (cr) {
+        const crEndpoint = (cr as Record<string, unknown>).navigationEndpoint;
+        if (checkUrl(getNestedValue(crEndpoint, ['commandMetadata', 'webCommandMetadata', 'url'])))
+          return true;
+        if (checkBrowseId(getNestedValue(crEndpoint, ['browseEndpoint', 'browseId']))) return true;
+      }
+    }
+    return false;
+  }
+
+  const pendingChips = new Set<Element>();
+  let isPollingPending = false;
+
+  function hasMetadata(chip: Element): boolean {
+    const rawChip = chip as unknown as Record<string, unknown>;
+    if (rawChip.navigationEndpoint) return true;
+    const data = (rawChip.elementData || rawChip.data || rawChip.chip) as
+      | Record<string, unknown>
+      | undefined;
+    if (data) {
+      if (data.navigationEndpoint) return true;
+      const cr = (data.chipRenderer || data.chipRender) as Record<string, unknown> | undefined;
+      if (cr?.navigationEndpoint) return true;
+    }
+    return false;
+  }
+
+  function checkPendingChips() {
+    const isHideShorts = document.documentElement.getAttribute('data-hide-shorts') === 'true';
+
+    pendingChips.forEach((chip) => {
+      if (isShortsChip(chip)) {
+        (chip as HTMLElement).style.display = isHideShorts ? 'none' : '';
+        pendingChips.delete(chip);
+      } else if (hasMetadata(chip)) {
+        pendingChips.delete(chip);
+      }
+    });
+
+    if (pendingChips.size > 0) {
+      if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(checkPendingChips);
+      } else {
+        setTimeout(checkPendingChips, 16);
+      }
+    } else {
+      isPollingPending = false;
     }
   }
 
   function hideShortsChips() {
     const isHideShorts = document.documentElement.getAttribute('data-hide-shorts') === 'true';
     document.querySelectorAll('yt-chip-cloud-chip-renderer').forEach((chip) => {
-      const text = chip.textContent?.trim();
-      if (text === 'Shorts') {
+      if (isShortsChip(chip)) {
         (chip as HTMLElement).style.display = isHideShorts ? 'none' : '';
+      } else if (!hasMetadata(chip)) {
+        pendingChips.add(chip);
+        if (!isPollingPending) {
+          isPollingPending = true;
+          if (typeof requestAnimationFrame !== 'undefined') {
+            requestAnimationFrame(checkPendingChips);
+          } else {
+            setTimeout(checkPendingChips, 16);
+          }
+        }
+      } else {
+        (chip as HTMLElement).style.display = '';
       }
     });
   }

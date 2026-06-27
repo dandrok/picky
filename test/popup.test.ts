@@ -39,10 +39,12 @@ const mockElements: Record<string, any> = {
   },
 };
 
+let domContentLoadedCallback: (() => void) | undefined;
+
 (global as any).document = {
   addEventListener(event: string, callback: () => void) {
     if (event === 'DOMContentLoaded') {
-      setTimeout(callback, 0);
+      domContentLoadedCallback = callback;
     }
   },
   getElementById(id: string) {
@@ -53,8 +55,8 @@ const mockElements: Record<string, any> = {
 test('popup.ts loads and saves settings', async () => {
   await import('../src/popup.js');
 
-  // Wait for DOMContentLoaded trigger
-  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.ok(domContentLoadedCallback);
+  domContentLoadedCallback();
 
   const hideShortsToggle = mockElements.hideShortsToggle;
   const hoverActionsToggle = mockElements.hoverActionsToggle;

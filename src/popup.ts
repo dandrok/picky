@@ -7,19 +7,28 @@ document.addEventListener('DOMContentLoaded', () => {
   ) as HTMLInputElement | null;
 
   if (hideShortsToggle && hoverActionsToggle) {
-    // Load current settings
+    let hideShortsInteracted = false;
+    let hoverActionsInteracted = false;
+
+    // Save changes on toggle (active immediately)
+    hideShortsToggle.addEventListener('change', () => {
+      hideShortsInteracted = true;
+      chrome.storage.local.set({ hideShorts: hideShortsToggle.checked });
+    });
+
+    hoverActionsToggle.addEventListener('change', () => {
+      hoverActionsInteracted = true;
+      chrome.storage.local.set({ hoverActions: hoverActionsToggle.checked });
+    });
+
+    // Load current settings without overwriting user's quick first click
     chrome.storage.local.get({ hideShorts: false, hoverActions: true }, (items) => {
-      hideShortsToggle.checked = !!items.hideShorts;
-      hoverActionsToggle.checked = !!items.hoverActions;
-
-      // Save changes on toggle
-      hideShortsToggle.addEventListener('change', () => {
-        chrome.storage.local.set({ hideShorts: hideShortsToggle.checked });
-      });
-
-      hoverActionsToggle.addEventListener('change', () => {
-        chrome.storage.local.set({ hoverActions: hoverActionsToggle.checked });
-      });
+      if (!hideShortsInteracted) {
+        hideShortsToggle.checked = !!items.hideShorts;
+      }
+      if (!hoverActionsInteracted) {
+        hoverActionsToggle.checked = !!items.hoverActions;
+      }
     });
   }
 });
