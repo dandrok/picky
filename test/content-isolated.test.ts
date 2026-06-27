@@ -59,7 +59,6 @@ before(async () => {
 });
 
 test('content-isolated sets initial attributes from chrome storage', () => {
-
   // Verify that attributes are set correctly based on mockStorage initial state
   // hideShorts is true => should set 'data-hide-shorts'
   assert.equal(docElementMock.getAttribute('data-hide-shorts'), 'true');

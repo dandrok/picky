@@ -27,11 +27,13 @@
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local') {
       if (changes.hideShorts) {
-        const hide = changes.hideShorts.newValue !== undefined ? !!changes.hideShorts.newValue : false;
+        const hide =
+          changes.hideShorts.newValue !== undefined ? !!changes.hideShorts.newValue : false;
         updateHideShorts(hide);
       }
       if (changes.hoverActions) {
-        const enabled = changes.hoverActions.newValue !== undefined ? !!changes.hoverActions.newValue : true;
+        const enabled =
+          changes.hoverActions.newValue !== undefined ? !!changes.hoverActions.newValue : true;
         updateHoverActions(!enabled);
       }
     }
