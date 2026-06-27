@@ -1,6 +1,12 @@
-# YouTube Hover Actions (v1.0.1)
+# YouTube Hover Actions & Picky Settings (v1.1.0)
 
-Chrome/Chromium extension that shows `Not interested` and `Don't recommend channel` directly on YouTube video cards when you hover them.
+Chrome/Chromium extension that adds hover-based quick actions to YouTube video cards and provides a control panel to clean up your feed (including hiding YouTube Shorts).
+
+## Features
+
+* **Quick Video Dismissal**: Hover over any YouTube video card to instantly access `Not interested` and `Don't recommend channel` buttons without opening the native three-dot menu.
+* **Hide YouTube Shorts**: Toggleable filter to remove Shorts sidebar guides, mini guides, feed shelves, search results, and category filter chips across all localized YouTube UIs. Also automatically redirects direct `/shorts/` page views to the standard `/watch?v=` player formats.
+* **Privacy & Access**: Built with a self-contained settings popup that avoids external network calls, uses system fonts, and ensures full keyboard navigation accessibility.
 
 ## Install From Chrome Web Store
 
@@ -26,11 +32,11 @@ The project is written in TypeScript and bundles assets via `tsup`.
 
 ### Scripts
 
-- `npm run build` — Compiles TS, bundles assets, and outputs to the `dist` directory.
-- `npm run typecheck` — Runs static type checking.
-- `npm test` — Runs unit tests.
-- `npm run lint` — Checks code style using ESLint.
-- `npm run format` — Formats files with Prettier.
+* `npm run build` — Compiles TS, bundles assets, and outputs to the `dist` directory.
+* `npm run typecheck` — Runs static type checking.
+* `npm test` — Runs unit tests.
+* `npm run lint` — Checks code style using ESLint.
+* `npm run format` — Formats files with Prettier.
 
 ### CI/CD
 
@@ -47,11 +53,14 @@ A GitHub Actions pipeline (`.github/workflows/cl.yml`) automatically checks form
 7. Click `Don't recommend channel` on another card.
 8. Confirm the green extension `Undo` button triggers YouTube's native undo and resets both extension buttons.
 9. Use keyboard focus to tab to the extension buttons and confirm the overlay is visible and each button has a clear focus outline.
-10. Repeat on Search results or another page where video cards have a three-dot menu.
+10. Click the extension icon in the toolbar, toggle **Hide YouTube Shorts**, and confirm the Shorts guide item, home shelf, and chip filters vanish instantly.
+11. Navigate directly to a `/shorts/VIDEO_ID` URL and verify it immediately redirects to `/watch?v=VIDEO_ID`.
 
-## Technical Notes
+## Technical & Architectural Notes
 
-The extension reuses YouTube's native menu actions instead of calling private APIs. If YouTube changes menu labels or DOM structure, update `src/content-utils.ts` and `src/content.ts`.
-
-Some cards may not expose both actions. In those cases, clicking the overlay action closes the native menu without changing the card.
-
+* **World Isolation & Communication**: 
+  The extension uses two content scripts to bypass page restrictions and protect extension permissions:
+  * `content-isolated.ts` (runs in the `ISOLATED` world): Has access to `chrome.storage.local`. It loads settings and applies them as `data-*` attributes on the `<html>` (`document.documentElement`) node.
+  * `content.ts` (runs in the `MAIN` page world): Observes changes to these DOM attributes and runs polymer page enhancement, element-removal, and video navigation redirects.
+* **SVG Path Icon Recognition**: Uses locale-independent path matching to hide sidebar links instantly, guaranteeing compatibility with all user language configurations.
+* **Asynchronous Element Matching**: Uses requestAnimationFrame queues to identify polymer-backed items (like filter chips) as soon as their internal binding properties are populated by the YouTube client app.
