@@ -237,6 +237,39 @@ import * as youtubeActions from './youtube-actions';
     await handleActionClick(button, card, overlay);
   }
 
+  function checkShortsRedirect() {
+    const isHideShorts = document.documentElement.getAttribute('data-hide-shorts') === 'true';
+    if (isHideShorts && window.location.pathname.startsWith('/shorts')) {
+      document.querySelectorAll('video').forEach((v) => {
+        try {
+          v.pause();
+        } catch {
+          // ignore error
+        }
+      });
+
+      const parts = window.location.pathname.split('/');
+      const shortsIdx = parts.indexOf('shorts');
+      const videoId = shortsIdx !== -1 ? parts[shortsIdx + 1] : null;
+
+      if (videoId && videoId.length > 2) {
+        window.location.replace(`/watch?v=${videoId}`);
+      } else {
+        window.location.replace('/');
+      }
+    }
+  }
+
+  function hideShortsChips() {
+    const isHideShorts = document.documentElement.getAttribute('data-hide-shorts') === 'true';
+    document.querySelectorAll('yt-chip-cloud-chip-renderer').forEach((chip) => {
+      const text = chip.textContent?.trim();
+      if (text === 'Shorts') {
+        (chip as HTMLElement).style.display = isHideShorts ? 'none' : '';
+      }
+    });
+  }
+
   function scanNewCards() {
     document.querySelectorAll(UNENHANCED_CARD_SELECTOR).forEach(enhanceCard);
   }
@@ -248,13 +281,33 @@ import * as youtubeActions from './youtube-actions';
   document.addEventListener('click', handleButtonClick, true);
 
   const debouncedScan = debounce(scanNewCards, 150);
-  const observer = new MutationObserver(debouncedScan);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  const observer = new MutationObserver((mutations) => {
+    hideShortsChips();
+    checkShortsRedirect();
+
+    const hasChildChanges = mutations.some((m) => m.type === 'childList');
+    if (hasChildChanges) {
+      debouncedScan();
+    }
+  });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-hide-shorts'],
+  });
 
   setInterval(() => {
+    checkShortsRedirect();
     scanNewCards();
     syncAllCards();
+    hideShortsChips();
   }, SCAN_INTERVAL_MS);
 
+  checkShortsRedirect();
+  hideShortsChips();
+  document.addEventListener('yt-navigate-start', checkShortsRedirect);
+  document.addEventListener('yt-navigate-finish', checkShortsRedirect);
+  window.addEventListener('popstate', checkShortsRedirect);
   scanNewCards();
 })();

@@ -109,3 +109,26 @@
     color: #fff;
   }
 }
+
+/* Hide Shorts feature toggled via Picky settings */
+html[data-hide-shorts="true"] ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-hide-shorts="true"] ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-hide-shorts="true"] ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html[data-hide-shorts="true"] ytd-rich-shelf-renderer[is-shorts],
+html[data-hide-shorts="true"] ytd-reel-shelf-renderer,
+html[data-hide-shorts="true"] ytd-reel-item-renderer,
+html[data-hide-shorts="true"] ytd-shorts,
+html[data-hide-shorts="true"] #shorts-container,
+html[data-hide-shorts="true"] ytm-pivot-bar-item-renderer:has(a[href^="/shorts"]),
+html[data-hide-shorts="true"] ytm-reel-shelf-renderer,
+html[data-hide-shorts="true"] ytm-shorts,
+html[data-hide-shorts="true"] grid-shelf-view-model:has(a[href^="/shorts"]),
+html[data-hide-shorts="true"] grid-shelf-view-model:has(ytm-shorts-lockup-view-model-v2) {
+  display: none !important;
+}
+
+/* Hide hover action overlay when disabled via settings */
+html[data-disable-hover-actions="true"] .yt-hover-actions-overlay {
+  display: none !important;
+}
+
