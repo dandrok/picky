@@ -13,7 +13,6 @@ import * as youtubeActions from './youtube-actions';
   ).join(',');
 
   const ACTION_SETTLE_DELAY_MS = 800;
-  const UNDO_SETTLE_DELAY_MS = 600;
   const ERROR_RESET_DELAY_MS = 1500;
   const SCAN_INTERVAL_MS = 2000;
   let isMenuActionInProgress = false;
@@ -202,7 +201,7 @@ import * as youtubeActions from './youtube-actions';
       ) {
         console.warn(
           '[YouTube Hover Actions] Possible DOM structure change detected. ' +
-            'Native Undo clicked but not matched by button selector.',
+          'Native Undo clicked but not matched by button selector.',
           event.target,
         );
         isNativeUndo = true;
