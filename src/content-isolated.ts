@@ -37,7 +37,7 @@
     const videoId = parts.length > 1 && parts[0] === 'shorts' ? parts[1] : null;
 
     if (videoId) {
-      window.location.replace(`/watch?v=${videoId}`);
+      window.location.replace(`/watch?v=${encodeURIComponent(videoId)}`);
     } else {
       window.location.replace('/');
     }

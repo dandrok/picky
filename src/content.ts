@@ -257,11 +257,12 @@ import * as youtubeActions from './youtube-actions';
     const videoId = parts.length > 1 && parts[0] === 'shorts' ? parts[1] : null;
 
     if (videoId) {
-      window.location.replace(`/watch?v=${videoId}`);
+      window.location.replace(`/watch?v=${encodeURIComponent(videoId)}`);
     } else {
       window.location.replace('/');
     }
   }
+
 
   function isShortsChip(chip: Element): boolean {
     const text = chip.textContent?.trim();
@@ -372,6 +373,56 @@ import * as youtubeActions from './youtube-actions';
     });
   }
 
+  function hideShortsTabs() {
+    const isHideShorts = document.documentElement.getAttribute('data-hide-shorts') === 'true';
+
+    document.querySelectorAll('yt-tab-shape').forEach((tab) => {
+      const rawTab = tab as unknown as Record<string, any>;
+      const checkUrl = (url: unknown) =>
+        typeof url === 'string' && (url.includes('/shorts') || url.endsWith('/shorts'));
+
+      let isShorts = false;
+
+      const getNestedValue = (obj: any, path: string[]): any => {
+        let current = obj;
+        for (const key of path) {
+          if (current && typeof current === 'object') {
+            current = current[key];
+          } else {
+            return undefined;
+          }
+        }
+        return current;
+      };
+
+      const directEndpoint = rawTab.navigationEndpoint || rawTab.endpoint;
+      if (directEndpoint) {
+        const url = getNestedValue(directEndpoint, ['commandMetadata', 'webCommandMetadata', 'url']);
+        if (checkUrl(url)) isShorts = true;
+      }
+
+      const data = rawTab.elementData || rawTab.data || rawTab.tab;
+      if (data) {
+        const dataEndpoint = data.navigationEndpoint || data.endpoint;
+        if (dataEndpoint) {
+          const url = getNestedValue(dataEndpoint, ['commandMetadata', 'webCommandMetadata', 'url']);
+          if (checkUrl(url)) isShorts = true;
+        }
+      }
+
+      const tabTitle = tab.getAttribute('tab-title');
+      if (tabTitle === 'Shorts') {
+        isShorts = true;
+      }
+
+      if (isShorts) {
+        (tab as HTMLElement).style.display = isHideShorts ? 'none' : '';
+      } else {
+        (tab as HTMLElement).style.display = '';
+      }
+    });
+  }
+
   function scanNewCards() {
     document.querySelectorAll(UNENHANCED_CARD_SELECTOR).forEach(enhanceCard);
   }
@@ -385,6 +436,7 @@ import * as youtubeActions from './youtube-actions';
   const debouncedScan = debounce(scanNewCards, 150);
   const observer = new MutationObserver((mutations) => {
     hideShortsChips();
+    hideShortsTabs();
     checkShortsRedirect();
 
     const hasChildChanges = mutations.some((m) => m.type === 'childList');
@@ -404,10 +456,12 @@ import * as youtubeActions from './youtube-actions';
     scanNewCards();
     syncAllCards();
     hideShortsChips();
+    hideShortsTabs();
   }, SCAN_INTERVAL_MS);
 
   checkShortsRedirect();
   hideShortsChips();
+  hideShortsTabs();
   document.addEventListener('yt-navigate-start', checkShortsRedirect);
   document.addEventListener('yt-navigate-finish', checkShortsRedirect);
   window.addEventListener('popstate', checkShortsRedirect);
