@@ -13,7 +13,6 @@ import * as youtubeActions from './youtube-actions';
   ).join(',');
 
   const ACTION_SETTLE_DELAY_MS = 800;
-  const UNDO_SETTLE_DELAY_MS = 600;
   const ERROR_RESET_DELAY_MS = 1500;
   const SCAN_INTERVAL_MS = 2000;
   let isMenuActionInProgress = false;
@@ -130,7 +129,12 @@ import * as youtubeActions from './youtube-actions';
       return;
     }
 
-    await utils.wait(UNDO_SETTLE_DELAY_MS);
+    const startTime = Date.now();
+    while (utils.isCardDismissed(card) && Date.now() - startTime < 3000) {
+      await utils.wait(100);
+    }
+    await utils.wait(150);
+
     buttonUi.clearOverlayPending(overlay);
     syncCardState(card);
   }
@@ -177,7 +181,11 @@ import * as youtubeActions from './youtube-actions';
     let isNativeUndo = false;
     let targetCard: HTMLElement | null = null;
 
-    if (nativeUndoButton && utils.textMatchesUndo(nativeUndoButton)) {
+    if (
+      nativeUndoButton &&
+      !utils.isExtensionActionButton(nativeUndoButton) &&
+      utils.textMatchesUndo(nativeUndoButton)
+    ) {
       isNativeUndo = true;
       targetCard = nativeUndoButton.closest('.yt-hover-actions-card') as HTMLElement;
     } else {
@@ -186,7 +194,11 @@ import * as youtubeActions from './youtube-actions';
       const dismissedCard = event.target.closest(
         '.yt-hover-actions-card.yt-hover-actions-dismissed',
       ) as HTMLElement;
-      if (dismissedCard && utils.textMatchesUndo(event.target)) {
+      if (
+        dismissedCard &&
+        !utils.isExtensionActionButton(event.target) &&
+        utils.textMatchesUndo(event.target)
+      ) {
         console.warn(
           '[YouTube Hover Actions] Possible DOM structure change detected. ' +
             'Native Undo clicked but not matched by button selector.',
@@ -200,13 +212,22 @@ import * as youtubeActions from './youtube-actions';
     if (isNativeUndo && targetCard) {
       const overlay = targetCard.querySelector('.yt-hover-actions-overlay') as HTMLElement;
       if (overlay) {
-        overlay.dataset.status = 'idle';
-        delete overlay.dataset.clickTime;
-        targetCard.classList.remove('yt-hover-actions-dismissed');
-        overlay.classList.remove('yt-hover-actions-hidden');
-        const buttons = buttonUi.getOverlayButtons(overlay);
-        buttonUi.clearOverlayPending(overlay);
-        buttons.forEach((btn) => buttonUi.setButtonState(btn, buttonUi.BUTTON_STATES.IDLE));
+        buttonUi.setOverlayPending(overlay, 'undo');
+        (async () => {
+          const startTime = Date.now();
+          while (utils.isCardDismissed(targetCard) && Date.now() - startTime < 3000) {
+            await utils.wait(100);
+          }
+          await utils.wait(150);
+
+          overlay.dataset.status = 'idle';
+          delete overlay.dataset.clickTime;
+          targetCard.classList.remove('yt-hover-actions-dismissed');
+          overlay.classList.remove('yt-hover-actions-hidden');
+          const buttons = buttonUi.getOverlayButtons(overlay);
+          buttonUi.clearOverlayPending(overlay);
+          buttons.forEach((btn) => buttonUi.setButtonState(btn, buttonUi.BUTTON_STATES.IDLE));
+        })();
       }
       return;
     }

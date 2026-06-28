@@ -116,9 +116,7 @@ export function getActionFromSvg(element: Element | null, action: ActionType): b
       if (
         normalizedD.includes('3.7548.393l15.4918.944') ||
         (normalizedD.includes('m122c') && normalizedD.includes('l8.46')) ||
-        (normalizedD.includes('m122') &&
-          normalizedD.includes('5.69') &&
-          normalizedD.includes('c-4.41'))
+        (normalizedD.includes('m122') && normalizedD.includes('5.69'))
       ) {
         return true;
       }
@@ -127,6 +125,8 @@ export function getActionFromSvg(element: Element | null, action: ActionType): b
         normalizedD.includes('48h8a110002h8') ||
         (normalizedD.includes('7v-2h10') && normalizedD.includes('511h7')) ||
         (normalizedD.includes('1713h7') && normalizedD.includes('511h7')) ||
+        (normalizedD.includes('48h8') && normalizedD.includes('8h8a1')) ||
+        (normalizedD.includes('h10v2h7') && normalizedD.includes('m122c')) ||
         (normalizedD.includes('h10v2h-7') && normalizedD.includes('m122c'))
       ) {
         return true;
@@ -236,13 +236,37 @@ export function isCardDismissed(card: Element | null): boolean {
 export function textMatchesUndo(element: Element | null): boolean {
   if (!element) return false;
 
-  // 1. English fallback or direct aria-label check
+  // 1. Localized text and attribute checks
   const values = [
     element.textContent,
     element.getAttribute?.('aria-label'),
     element.getAttribute?.('title'),
   ];
-  if (values.some((value) => normalizeMenuText(value) === 'undo')) {
+
+  const UNDO_TERMS = [
+    'undo',
+    'cofnij',
+    'rückgängig',
+    'annuler',
+    'deshacer',
+    'annulla',
+    'desfazer',
+    'отменить',
+    'отмена',
+    '元に戻す',
+    '撤销',
+    '復原',
+    '실행 취소',
+    'geri al',
+    'ongedaan maken',
+  ];
+
+  if (
+    values.some((value) => {
+      const norm = normalizeMenuText(value);
+      return UNDO_TERMS.some((term) => norm === term || norm.includes(term));
+    })
+  ) {
     return true;
   }
 
