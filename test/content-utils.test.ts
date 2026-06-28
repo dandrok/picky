@@ -334,3 +334,143 @@ test('findUndoButton ignores extension undo buttons and returns YouTube native u
 
   assert.equal(findUndoButton(container), nativeUndo);
 });
+
+test('findMenuItemByAction finds target by SVG path matching regardless of language text', () => {
+  const mockPath = {
+    getAttribute(name: string) {
+      if (name === 'd') {
+        return 'M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1Zm0 2a9 9 0 018.246 12.605L4.755 6.661A8.99 8.99 0 0112 3ZM3.754 8.393l15.491 8.944A9 9 0 013.754 8.393Z';
+      }
+      return null;
+    },
+  } as unknown as Element;
+
+  const item = {
+    textContent: 'Non-English Text Here',
+    querySelectorAll(selector: string) {
+      return selector === 'path' ? [mockPath] : [];
+    },
+    getAttribute() {
+      return null;
+    },
+  } as unknown as Element;
+
+  assert.equal(findMenuItemByAction([item], ACTIONS.NOT_INTERESTED), item);
+});
+
+test('isOverflowButton matches by class or parent class / SVG path in other languages', () => {
+  const buttonWithClass = {
+    matches(selector: string) {
+      return selector === 'button';
+    },
+    getAttribute(name: string) {
+      if (name === 'aria-label') return "Plus d'actions"; // Non-English
+      return null;
+    },
+    classList: {
+      contains(className: string) {
+        return className === 'yt-icon-button';
+      },
+    },
+    closest(selector: string) {
+      return selector === '.dropdown-trigger' ||
+        selector === 'ytd-menu-renderer' ||
+        selector === 'ytd-menu-button-renderer'
+        ? {}
+        : null;
+    },
+  } as unknown as Element;
+
+  assert.equal(isOverflowButton(buttonWithClass), true);
+
+  const standaloneIconButton = {
+    matches(selector: string) {
+      return selector === 'button';
+    },
+    getAttribute() {
+      return null;
+    },
+    classList: {
+      contains(className: string) {
+        return className === 'yt-icon-button';
+      },
+    },
+    closest() {
+      return null;
+    },
+  } as unknown as Element;
+
+  assert.equal(isOverflowButton(standaloneIconButton), false);
+
+  const genericNestedButton = {
+    matches(selector: string) {
+      return selector === 'button';
+    },
+    getAttribute() {
+      return null;
+    },
+    classList: {
+      contains() {
+        return false;
+      },
+    },
+    closest(selector: string) {
+      return selector === '.dropdown-trigger' ||
+        selector === 'ytd-menu-renderer' ||
+        selector === 'ytd-menu-button-renderer'
+        ? {}
+        : null;
+    },
+  } as unknown as Element;
+
+  assert.equal(isOverflowButton(genericNestedButton), false);
+
+  const mockSvgPath = {
+    getAttribute(name: string) {
+      if (name === 'd')
+        return 'M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z';
+      return null;
+    },
+  } as unknown as Element;
+
+  const buttonWithSvg = {
+    matches(selector: string) {
+      return selector === 'button';
+    },
+    getAttribute() {
+      return null;
+    },
+    querySelectorAll(selector: string) {
+      return selector === 'path' ? [mockSvgPath] : [];
+    },
+  } as unknown as Element;
+
+  assert.equal(isOverflowButton(buttonWithSvg), true);
+});
+
+test('findUndoButton matches by ID / class name when text is localized', () => {
+  const localizedUndo = {
+    id: 'undo-button',
+    textContent: 'Rückgängig machen', // German
+    offsetParent: {},
+    classList: {
+      contains() {
+        return false;
+      },
+    },
+    getAttribute() {
+      return null;
+    },
+    getBoundingClientRect() {
+      return { width: 48, height: 32 };
+    },
+  } as unknown as Element;
+
+  const container = {
+    querySelectorAll(selector: string) {
+      return selector.includes('button') ? [localizedUndo] : [];
+    },
+  } as unknown as Element;
+
+  assert.equal(findUndoButton(container), localizedUndo);
+});

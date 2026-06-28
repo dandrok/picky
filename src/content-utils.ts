@@ -105,13 +105,51 @@ export function getButtonClickTarget(item: Element | null): Element | null {
   );
 }
 
+export function getActionFromSvg(element: Element | null, action: ActionType): boolean {
+  if (!element || typeof element.querySelectorAll !== 'function') return false;
+  const paths = Array.from(element.querySelectorAll('path'));
+  for (const path of paths) {
+    const d = path.getAttribute('d') || '';
+    const normalizedD = d.replace(/[\s,]+/g, '').toLowerCase();
+
+    if (action === ACTIONS.NOT_INTERESTED) {
+      if (
+        normalizedD.includes('3.7548.393l15.4918.944') ||
+        (normalizedD.includes('m122c') && normalizedD.includes('l8.46')) ||
+        (normalizedD.includes('m122') &&
+          normalizedD.includes('5.69') &&
+          normalizedD.includes('c-4.41'))
+      ) {
+        return true;
+      }
+    } else if (action === ACTIONS.DONT_RECOMMEND_CHANNEL) {
+      if (
+        normalizedD.includes('48h8a110002h8') ||
+        (normalizedD.includes('7v-2h10') && normalizedD.includes('511h7')) ||
+        (normalizedD.includes('1713h7') && normalizedD.includes('511h7')) ||
+        (normalizedD.includes('h10v2h-7') && normalizedD.includes('m122c'))
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 export function findMenuItemByAction(
   items: Iterable<Element> | null,
   action: ActionType,
 ): Element | null {
-  const item = Array.from(items || []).find((candidate) =>
-    textMatchesAction(candidate.textContent, action),
-  );
+  const itemArray = Array.from(items || []);
+
+  // 1. Try language-agnostic SVG path matching
+  let item = itemArray.find((candidate) => getActionFromSvg(candidate, action));
+
+  // 2. Fall back to text matching
+  if (!item) {
+    item = itemArray.find((candidate) => textMatchesAction(candidate.textContent, action));
+  }
+
   return getActionClickTarget(item || null);
 }
 
@@ -120,8 +158,46 @@ export function isOverflowButton(element: Element | null): boolean {
     return false;
   }
 
+  // 1. English label matches
   const label = normalizeMenuText(element.getAttribute?.('aria-label'));
-  return label === 'action menu' || label === 'more actions' || label === 'more options';
+  if (label === 'action menu' || label === 'more actions' || label === 'more options') {
+    return true;
+  }
+
+  // 2. Class/ID checking (language-agnostic)
+  const hasMenuClassOrParent =
+    element.classList &&
+    typeof element.classList.contains === 'function' &&
+    (element.classList.contains('media-item-menu-button') ||
+      (element.classList.contains('yt-icon-button') &&
+        typeof element.closest === 'function' &&
+        (element.closest('.dropdown-trigger') ||
+          element.closest('ytd-menu-renderer') ||
+          element.closest('ytd-menu-button-renderer'))));
+
+  if (hasMenuClassOrParent) {
+    return true;
+  }
+
+  // 3. SVG path check (language-agnostic)
+  if (typeof element.querySelectorAll === 'function') {
+    const paths = Array.from(element.querySelectorAll('path'));
+    for (const path of paths) {
+      const d = path.getAttribute('d') || '';
+      const normalizedD = d.replace(/[\s,]+/g, '').toLowerCase();
+      if (
+        normalizedD.includes('128c') ||
+        normalizedD.includes('m125a2') ||
+        normalizedD.includes('m1216a2') ||
+        (normalizedD.match(/a22/g) || []).length === 3 ||
+        (normalizedD.match(/a1\.51\.5/g) || []).length === 3
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 export function isVisibleElement(element: Element | null): boolean {
@@ -150,19 +226,51 @@ export function isVisibleElement(element: Element | null): boolean {
 }
 
 export function isCardDismissed(card: Element | null): boolean {
-  return Boolean(card && card.querySelector(SELECTORS.DISMISSED_CARDS));
+  return Boolean(
+    card &&
+    typeof card.querySelector === 'function' &&
+    card.querySelector(SELECTORS.DISMISSED_CARDS),
+  );
 }
 
 export function textMatchesUndo(element: Element | null): boolean {
   if (!element) return false;
 
+  // 1. English fallback or direct aria-label check
   const values = [
     element.textContent,
     element.getAttribute?.('aria-label'),
     element.getAttribute?.('title'),
   ];
+  if (values.some((value) => normalizeMenuText(value) === 'undo')) {
+    return true;
+  }
 
-  return values.some((value) => normalizeMenuText(value) === 'undo');
+  // 2. Class/ID checking (language-agnostic)
+  const hasUndoIdOrClass = (el: Element | null): boolean => {
+    if (!el) return false;
+    const id = el.id || '';
+    const className = typeof el.className === 'string' ? el.className : '';
+    const ariaLabel = el.getAttribute?.('aria-label') || '';
+
+    return (
+      id.toLowerCase().includes('undo') ||
+      className.toLowerCase().includes('undo') ||
+      ariaLabel.toLowerCase().includes('undo')
+    );
+  };
+
+  if (
+    hasUndoIdOrClass(element) ||
+    hasUndoIdOrClass(element.parentElement) ||
+    (typeof element.closest === 'function' &&
+      (hasUndoIdOrClass(element.closest('ytd-button-renderer')) ||
+        hasUndoIdOrClass(element.closest('yt-button-view-model'))))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export function isExtensionActionButton(element: Element | null): boolean {

@@ -127,12 +127,26 @@ html[data-hide-shorts="true"] ytm-pivot-bar-item-renderer:has(a[href^="/shorts"]
 html[data-hide-shorts="true"] ytm-reel-shelf-renderer,
 html[data-hide-shorts="true"] ytm-shorts,
 html[data-hide-shorts="true"] grid-shelf-view-model:has(a[href^="/shorts"]),
-html[data-hide-shorts="true"] grid-shelf-view-model:has(ytm-shorts-lockup-view-model-v2) {
+html[data-hide-shorts="true"] grid-shelf-view-model:has(ytm-shorts-lockup-view-model-v2),
+html[data-hide-shorts="true"] ytd-rich-item-renderer[is-shorts-grid],
+html[data-hide-shorts="true"] ytd-rich-item-renderer:has(ytm-shorts-lockup-view-model-v2),
+html[data-hide-shorts="true"] ytd-rich-item-renderer:has(ytm-shorts-lockup-view-model),
+html[data-hide-shorts="true"] ytd-rich-item-renderer:has(.shortsLockupViewModelHost) {
   display: none !important;
 }
 
+
 /* Hide hover action overlay when disabled via settings */
 html[data-disable-hover-actions="true"] .yt-hover-actions-overlay {
+  display: none !important;
+}
+
+/* Hide hover action overlay on pages that do not support "Not interested" or "Don't recommend channel" */
+ytd-browse[page-subtype]:not([page-subtype="home"]) .yt-hover-actions-overlay,
+ytd-search .yt-hover-actions-overlay,
+ytd-search-grid-renderer .yt-hover-actions-overlay,
+ytm-browse[page-subtype]:not([page-subtype="home"]) .yt-hover-actions-overlay,
+ytm-search .yt-hover-actions-overlay {
   display: none !important;
 }
 
