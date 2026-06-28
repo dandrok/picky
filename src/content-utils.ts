@@ -258,13 +258,15 @@ export function textMatchesUndo(element: Element | null): boolean {
     '復原',
     '실행 취소',
     'geri al',
-    'ongedaan maken'
+    'ongedaan maken',
   ];
 
-  if (values.some((value) => {
-    const norm = normalizeMenuText(value);
-    return UNDO_TERMS.some(term => norm === term || norm.includes(term));
-  })) {
+  if (
+    values.some((value) => {
+      const norm = normalizeMenuText(value);
+      return UNDO_TERMS.some((term) => norm === term || norm.includes(term));
+    })
+  ) {
     return true;
   }
 

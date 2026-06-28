@@ -182,7 +182,11 @@ import * as youtubeActions from './youtube-actions';
     let isNativeUndo = false;
     let targetCard: HTMLElement | null = null;
 
-    if (nativeUndoButton && !utils.isExtensionActionButton(nativeUndoButton) && utils.textMatchesUndo(nativeUndoButton)) {
+    if (
+      nativeUndoButton &&
+      !utils.isExtensionActionButton(nativeUndoButton) &&
+      utils.textMatchesUndo(nativeUndoButton)
+    ) {
       isNativeUndo = true;
       targetCard = nativeUndoButton.closest('.yt-hover-actions-card') as HTMLElement;
     } else {
@@ -191,7 +195,11 @@ import * as youtubeActions from './youtube-actions';
       const dismissedCard = event.target.closest(
         '.yt-hover-actions-card.yt-hover-actions-dismissed',
       ) as HTMLElement;
-      if (dismissedCard && !utils.isExtensionActionButton(event.target) && utils.textMatchesUndo(event.target)) {
+      if (
+        dismissedCard &&
+        !utils.isExtensionActionButton(event.target) &&
+        utils.textMatchesUndo(event.target)
+      ) {
         console.warn(
           '[YouTube Hover Actions] Possible DOM structure change detected. ' +
             'Native Undo clicked but not matched by button selector.',
