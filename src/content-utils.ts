@@ -115,23 +115,19 @@ export function getActionFromSvg(element: Element | null, action: ActionType): b
     if (action === ACTIONS.NOT_INTERESTED) {
       if (
         normalizedD.includes('3.7548.393l15.4918.944') ||
-        normalizedD.includes('3.754') ||
-        normalizedD.includes('8.393') ||
-        normalizedD.includes('15.491') ||
-        normalizedD.includes('8.944') ||
         (normalizedD.includes('m122c') && normalizedD.includes('l8.46')) ||
-        (normalizedD.includes('m122') && normalizedD.includes('5.69'))
+        (normalizedD.includes('m122') &&
+          normalizedD.includes('5.69') &&
+          normalizedD.includes('c-4.41'))
       ) {
         return true;
       }
     } else if (action === ACTIONS.DONT_RECOMMEND_CHANNEL) {
       if (
         normalizedD.includes('48h8a110002h8') ||
-        normalizedD.includes('48h8') ||
-        normalizedD.includes('8h8a1') ||
-        normalizedD.includes('511h7') ||
-        normalizedD.includes('7v-2h10') ||
-        normalizedD.includes('1713h7')
+        (normalizedD.includes('7v-2h10') && normalizedD.includes('511h7')) ||
+        (normalizedD.includes('1713h7') && normalizedD.includes('511h7')) ||
+        (normalizedD.includes('h10v2h-7') && normalizedD.includes('m122c'))
       ) {
         return true;
       }
@@ -170,13 +166,14 @@ export function isOverflowButton(element: Element | null): boolean {
 
   // 2. Class/ID checking (language-agnostic)
   const hasMenuClassOrParent =
-    (typeof element.closest === 'function' &&
-      (element.closest('.dropdown-trigger') ||
-        element.closest('ytd-menu-renderer') ||
-        element.closest('ytd-menu-button-renderer'))) ||
-    (element.classList &&
-      typeof element.classList.contains === 'function' &&
-      element.classList.contains('media-item-menu-button'));
+    element.classList &&
+    typeof element.classList.contains === 'function' &&
+    (element.classList.contains('media-item-menu-button') ||
+      (element.classList.contains('yt-icon-button') &&
+        typeof element.closest === 'function' &&
+        (element.closest('.dropdown-trigger') ||
+          element.closest('ytd-menu-renderer') ||
+          element.closest('ytd-menu-button-renderer'))));
 
   if (hasMenuClassOrParent) {
     return true;

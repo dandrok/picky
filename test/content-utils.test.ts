@@ -402,6 +402,29 @@ test('isOverflowButton matches by class or parent class / SVG path in other lang
 
   assert.equal(isOverflowButton(standaloneIconButton), false);
 
+  const genericNestedButton = {
+    matches(selector: string) {
+      return selector === 'button';
+    },
+    getAttribute() {
+      return null;
+    },
+    classList: {
+      contains() {
+        return false;
+      },
+    },
+    closest(selector: string) {
+      return selector === '.dropdown-trigger' ||
+        selector === 'ytd-menu-renderer' ||
+        selector === 'ytd-menu-button-renderer'
+        ? {}
+        : null;
+    },
+  } as unknown as Element;
+
+  assert.equal(isOverflowButton(genericNestedButton), false);
+
   const mockSvgPath = {
     getAttribute(name: string) {
       if (name === 'd')
