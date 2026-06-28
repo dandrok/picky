@@ -145,15 +145,13 @@ export function findMenuItemByAction(
   action: ActionType,
 ): Element | null {
   const itemArray = Array.from(items || []);
-  
+
   // 1. Try language-agnostic SVG path matching
   let item = itemArray.find((candidate) => getActionFromSvg(candidate, action));
 
   // 2. Fall back to text matching
   if (!item) {
-    item = itemArray.find((candidate) =>
-      textMatchesAction(candidate.textContent, action),
-    );
+    item = itemArray.find((candidate) => textMatchesAction(candidate.textContent, action));
   }
 
   return getActionClickTarget(item || null);
@@ -176,7 +174,8 @@ export function isOverflowButton(element: Element | null): boolean {
       (element.closest('.dropdown-trigger') ||
         element.closest('ytd-menu-renderer') ||
         element.closest('ytd-menu-button-renderer'))) ||
-    (element.classList && typeof element.classList.contains === 'function' &&
+    (element.classList &&
+      typeof element.classList.contains === 'function' &&
       element.classList.contains('media-item-menu-button'));
 
   if (hasMenuClassOrParent) {
@@ -230,7 +229,11 @@ export function isVisibleElement(element: Element | null): boolean {
 }
 
 export function isCardDismissed(card: Element | null): boolean {
-  return Boolean(card && typeof card.querySelector === 'function' && card.querySelector(SELECTORS.DISMISSED_CARDS));
+  return Boolean(
+    card &&
+    typeof card.querySelector === 'function' &&
+    card.querySelector(SELECTORS.DISMISSED_CARDS),
+  );
 }
 
 export function textMatchesUndo(element: Element | null): boolean {
@@ -252,7 +255,7 @@ export function textMatchesUndo(element: Element | null): boolean {
     const id = el.id || '';
     const className = typeof el.className === 'string' ? el.className : '';
     const ariaLabel = el.getAttribute?.('aria-label') || '';
-    
+
     return (
       id.toLowerCase().includes('undo') ||
       className.toLowerCase().includes('undo') ||

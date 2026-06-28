@@ -263,7 +263,6 @@ import * as youtubeActions from './youtube-actions';
     }
   }
 
-
   function isShortsChip(chip: Element): boolean {
     const text = chip.textContent?.trim();
     if (text === 'Shorts') {
@@ -397,7 +396,11 @@ import * as youtubeActions from './youtube-actions';
 
       const directEndpoint = rawTab.navigationEndpoint || rawTab.endpoint;
       if (directEndpoint) {
-        const url = getNestedValue(directEndpoint, ['commandMetadata', 'webCommandMetadata', 'url']);
+        const url = getNestedValue(directEndpoint, [
+          'commandMetadata',
+          'webCommandMetadata',
+          'url',
+        ]);
         if (checkUrl(url)) isShorts = true;
       }
 
@@ -405,7 +408,11 @@ import * as youtubeActions from './youtube-actions';
       if (data) {
         const dataEndpoint = data.navigationEndpoint || data.endpoint;
         if (dataEndpoint) {
-          const url = getNestedValue(dataEndpoint, ['commandMetadata', 'webCommandMetadata', 'url']);
+          const url = getNestedValue(dataEndpoint, [
+            'commandMetadata',
+            'webCommandMetadata',
+            'url',
+          ]);
           if (checkUrl(url)) isShorts = true;
         }
       }
