@@ -201,7 +201,7 @@ import * as youtubeActions from './youtube-actions';
       ) {
         console.warn(
           '[YouTube Hover Actions] Possible DOM structure change detected. ' +
-          'Native Undo clicked but not matched by button selector.',
+            'Native Undo clicked but not matched by button selector.',
           event.target,
         );
         isNativeUndo = true;
