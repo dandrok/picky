@@ -2,14 +2,19 @@
   "name": "youtube-hover-actions",
   "version": "1.1.2",
   "private": true,
+  "type": "module",
   "description": "Chrome extension that exposes YouTube card menu actions on hover.",
   "scripts": {
     "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "build": "npm run typecheck && tsup && node -e \"const fs = require('fs'); fs.copyFileSync('manifest.json', 'dist/manifest.json'); fs.copyFileSync('popup.html', 'dist/popup.html'); fs.cpSync('icons', 'dist/icons', { recursive: true });\"",
-    "test": "npm run typecheck && node --import tsx --test test/**/*.test.ts",
-    "lint": "npm run typecheck && eslint src/**/*.ts test/**/*.ts",
-    "format": "npm run typecheck && prettier --write src/**/*.ts test/**/*.ts",
-    "format:check": "npm run typecheck && prettier --check src/**/*.ts test/**/*.ts"
+    "build": "node scripts/build.js --none",
+    "pack": "node scripts/build.js --all",
+    "pack:chrome": "node scripts/build.js --chrome",
+    "pack:firefox": "node scripts/build.js --firefox",
+    "test": "node --import tsx --test test/**/*.test.ts",
+    "lint": "eslint src/**/*.ts test/**/*.ts",
+    "format": "prettier --write src/**/*.ts test/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts test/**/*.ts",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test"
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",

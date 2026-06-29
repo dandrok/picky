@@ -145,3 +145,6 @@ vite.config.ts.timestamp-*
 .codex
 docs/*
 icons/*
+
+# Packaged extension releases
+releases/

@@ -55,7 +55,7 @@ const docElementMock = {
 
 before(async () => {
   // Import the file to execute the code once before any tests run
-  await import('../src/content-isolated.js');
+  await import('../src/content-isolated');
 });
 
 test('content-isolated sets initial attributes from chrome storage', () => {

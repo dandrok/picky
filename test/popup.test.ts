@@ -53,7 +53,7 @@ let domContentLoadedCallback: (() => void) | undefined;
 } as any;
 
 test('popup.ts loads and saves settings', async () => {
-  await import('../src/popup.js');
+  await import('../src/popup');
 
   assert.ok(domContentLoadedCallback);
   domContentLoadedCallback();
