@@ -1,6 +1,6 @@
 # YouTube Hover Actions & Picky Settings (v1.1.0)
 
-Chrome/Chromium extension that adds hover-based quick actions to YouTube video cards and provides a control panel to clean up your feed (including hiding YouTube Shorts).
+Chrome and Firefox extension that adds hover-based quick actions to YouTube video cards and provides a control panel to clean up your feed (including hiding YouTube Shorts).
 
 ## Features
 
@@ -21,18 +21,22 @@ https://chromewebstore.google.com/detail/youtube-hover-actions/jlljlpnhadllcnbaj
    npm install
    npm run build
    ```
-3. Open `chrome://extensions/`.
-4. Enable **Developer mode**.
-5. Click **Load unpacked** and select the built `dist` folder.
-6. Open or refresh `https://www.youtube.com`.
+3. Load the extension in your browser:
+   * **Chrome/Chromium:** Open `chrome://extensions/`, enable **Developer mode**, click **Load unpacked**, and select the built `dist/chrome` directory.
+   * **Firefox:** Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on...**, and select the built `dist/firefox/manifest.json`.
+4. Open or refresh `https://www.youtube.com`.
 
 ## Development
 
-The project is written in TypeScript and bundles assets via `tsup`.
+The project is written in TypeScript and bundles assets via `tsup` targeting standard ES Modules.
 
 ### Scripts
 
-* `npm run build` — Compiles TS, bundles assets, and outputs to the `dist` directory.
+* `npm run build` — Compiles TS, bundles assets, and outputs build targets to `dist/chrome` and `dist/firefox`.
+* `npm run pack` — Runs build and packages targets into `releases/` (generating a `.zip` for Chrome and a `.xpi` for Firefox).
+* `npm run pack:chrome` — Compiles and zips the Chrome target into `releases/`.
+* `npm run pack:firefox` — Compiles and packages the Firefox target into `releases/`.
+* `npm run check` — Runs all validations: static type checking, ESLint rules, formatting checks, and unit tests.
 * `npm run typecheck` — Runs static type checking.
 * `npm test` — Runs unit tests.
 * `npm run lint` — Checks code style using ESLint.
