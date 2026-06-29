@@ -15,10 +15,16 @@ const chromeDir = path.join(distDir, 'chrome');
 const firefoxDir = path.join(distDir, 'firefox');
 const releasesDir = path.join(rootDir, 'releases');
 
-// 1. Read metadata
+// 1. Read metadata and parse arguments
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const version = packageJson.version;
 const manifestJson = JSON.parse(fs.readFileSync(manifestJsonPath, 'utf8'));
+
+const arg = process.argv[2];
+const targetChrome = !arg || arg === '--chrome' || arg === '--all' || arg === '--none';
+const targetFirefox = !arg || arg === '--firefox' || arg === '--all' || arg === '--none';
+const packChrome = !arg || arg === '--chrome' || arg === '--all';
+const packFirefox = !arg || arg === '--firefox' || arg === '--all';
 
 console.log(`Building YouTube Hover Actions v${version}...`);
 
@@ -39,9 +45,17 @@ function resetDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
-resetDir(chromeDir);
-resetDir(firefoxDir);
-resetDir(releasesDir);
+if (targetChrome) {
+  resetDir(chromeDir);
+}
+if (targetFirefox) {
+  resetDir(firefoxDir);
+}
+if (targetChrome && targetFirefox) {
+  resetDir(releasesDir);
+} else if (!fs.existsSync(releasesDir)) {
+  fs.mkdirSync(releasesDir, { recursive: true });
+}
 
 // 4. Copy files to targets
 function copyDir(src, dest) {
@@ -50,8 +64,12 @@ function copyDir(src, dest) {
 
 function copyToTargets(srcFile, destName) {
   const name = destName || path.basename(srcFile);
-  fs.copyFileSync(srcFile, path.join(chromeDir, name));
-  fs.copyFileSync(srcFile, path.join(firefoxDir, name));
+  if (targetChrome) {
+    fs.copyFileSync(srcFile, path.join(chromeDir, name));
+  }
+  if (targetFirefox) {
+    fs.copyFileSync(srcFile, path.join(firefoxDir, name));
+  }
 }
 
 console.log('Copying shared assets...');
@@ -66,47 +84,51 @@ for (const file of compiledFiles) {
 }
 
 // Copy static assets
-fs.copyFileSync(path.join(rootDir, 'popup.html'), path.join(chromeDir, 'popup.html'));
-fs.copyFileSync(path.join(rootDir, 'popup.html'), path.join(firefoxDir, 'popup.html'));
-copyDir(path.join(rootDir, 'icons'), path.join(chromeDir, 'icons'));
-copyDir(path.join(rootDir, 'icons'), path.join(firefoxDir, 'icons'));
+if (targetChrome) {
+  fs.copyFileSync(path.join(rootDir, 'popup.html'), path.join(chromeDir, 'popup.html'));
+  copyDir(path.join(rootDir, 'icons'), path.join(chromeDir, 'icons'));
+}
+if (targetFirefox) {
+  fs.copyFileSync(path.join(rootDir, 'popup.html'), path.join(firefoxDir, 'popup.html'));
+  copyDir(path.join(rootDir, 'icons'), path.join(firefoxDir, 'icons'));
+}
 
 // Cleanup temporary shared dir
 fs.rmSync(sharedDir, { recursive: true, force: true });
 
 // 5. Generate manifest.json for Chrome
-console.log('Generating Chrome manifest...');
-fs.writeFileSync(
-  path.join(chromeDir, 'manifest.json'),
-  JSON.stringify(manifestJson, null, 2),
-  'utf8'
-);
+if (targetChrome) {
+  console.log('Generating Chrome manifest...');
+  fs.writeFileSync(
+    path.join(chromeDir, 'manifest.json'),
+    JSON.stringify(manifestJson, null, 2),
+    'utf8'
+  );
+}
 
 // 6. Generate manifest.json for Firefox
-console.log('Generating Firefox manifest...');
-const firefoxManifest = {
-  ...manifestJson,
-  browser_specific_settings: {
-    gecko: {
-      id: 'youtube-hover-actions@picky',
-      strict_min_version: '140.0',
-      data_collection_permissions: {
-        required: ['none'],
+if (targetFirefox) {
+  console.log('Generating Firefox manifest...');
+  const firefoxManifest = {
+    ...manifestJson,
+    browser_specific_settings: {
+      gecko: {
+        id: 'youtube-hover-actions@picky',
+        strict_min_version: '140.0',
+        data_collection_permissions: {
+          required: ['none'],
+        },
       },
     },
-  },
-};
-fs.writeFileSync(
-  path.join(firefoxDir, 'manifest.json'),
-  JSON.stringify(firefoxManifest, null, 2),
-  'utf8'
-);
+  };
+  fs.writeFileSync(
+    path.join(firefoxDir, 'manifest.json'),
+    JSON.stringify(firefoxManifest, null, 2),
+    'utf8'
+  );
+}
 
 // 7. Packaging/Zipping
-const arg = process.argv[2];
-const packChrome = !arg || arg === '--chrome' || arg === '--all';
-const packFirefox = !arg || arg === '--firefox' || arg === '--all';
-
 function createZip(sourceDir, destFile) {
   console.log(`Packaging ${path.basename(destFile)}...`);
   try {
